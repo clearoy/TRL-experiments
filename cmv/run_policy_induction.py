@@ -144,7 +144,7 @@ CONTROL_POLICY_POINTWISE = (
 
 
 
-def thl_commit() -> str:
+def trl_commit() -> str:
     try:
         return subprocess.check_output(
             ["git", "-C", str(REPO_ROOT), "rev-parse", "--short", "HEAD"],
@@ -552,7 +552,7 @@ async def main_async(args: argparse.Namespace) -> None:
             "policy_fire_rates": fire,
             "threshold": float(pi.threshold),
             "validation_result": pi.validation_result,
-            "thl_commit": thl_commit(),
+            "trl_commit": trl_commit(),
             "cache": cache.stats,
             "config": {
                 "gen_model": args.gen_model, "predict_model": args.predict_model,

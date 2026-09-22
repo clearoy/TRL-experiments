@@ -69,7 +69,7 @@ TASK_DESCRIPTION = (
 )
 
 
-def thl_commit() -> str:
+def trl_commit() -> str:
     """The library commit this result was produced with.
 
     The library and these experiments live in separate repos, so a result
@@ -218,7 +218,7 @@ async def main_async(args: argparse.Namespace) -> None:
         for t in np.arange(0.05, 0.96, 0.05)
     ]
     metrics["n_scored"] = len(pred_df)
-    metrics["thl_commit"] = thl_commit()
+    metrics["trl_commit"] = trl_commit()
     metrics["config"] = {
         "gen_model": args.gen_model,
         "predict_model": args.predict_model,

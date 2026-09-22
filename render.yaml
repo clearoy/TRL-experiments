@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: thl-compas-dashboard
+    name: trl-compas-dashboard
     runtime: static
     staticPublishPath: ./dashboard
     pullRequestPreviewsEnabled: false

@@ -1,4 +1,4 @@
-# THL-experiments
+# TRL-experiments
 
 Benchmarks for [`think-reason-learn`](https://github.com/Vela-Research/think-reason-learn)
 on public datasets with published baselines, so its algorithms can be measured
@@ -14,7 +14,7 @@ README, and results that are reproducible from the scripts alone.
 ├── README.md                  setup decisions, results, known gaps
 ├── prepare_data.py            download -> filter -> split
 ├── baselines.py               traditional-ML baselines on the same split
-├── run_policy_induction.py    the THL algorithm under test
+├── run_policy_induction.py    the TRL algorithm under test
 ├── compare.py                 renders the comparison table
 ├── data/                      (gitignored) datasets + split_meta.json
 ├── results/                   (gitignored) metrics + per-row predictions
@@ -59,7 +59,7 @@ comparison; comparing a 500-row method against a 4,320-row one is not.
 as-is (`_render_sample()` flattens them to `column: value` lines), so any
 difference is attributable to the method rather than to a preprocessing step.
 
-**Every result records the library commit** it was produced with (`thl_commit` in
+**Every result records the library commit** it was produced with (`trl_commit` in
 the metrics JSON). With the library and experiments in separate repos, a result
 without that stamp is not reproducible.
 
