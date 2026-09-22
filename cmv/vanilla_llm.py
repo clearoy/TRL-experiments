@@ -107,7 +107,12 @@ async def ask(llm: CachingLLM, model: str, row: pd.Series, sem: asyncio.Semaphor
                     instructions=INSTRUCTIONS,
                     temperature=0.0,
                 )
-                if r.response is not None:
+                # The library can silently return response="" (a plain str)
+                # instead of a Verdict or None, when Gemini's structured-output
+                # field comes back empty under degraded/high-load conditions --
+                # `isinstance` check needed because `"" is not None` is True and
+                # `.winner` on a str crashes with AttributeError.
+                if isinstance(r.response, Verdict):
                     return r.response.winner
             except Exception:
                 if attempt == 3:

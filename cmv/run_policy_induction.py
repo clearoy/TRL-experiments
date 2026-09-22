@@ -331,7 +331,7 @@ async def main_async(args: argparse.Namespace) -> None:
             args.condition,
             f"n{n_train}",
             f"gen{slug(args.gen_model)}",
-            f"pred{slug(args.predict_model)}",
+            f"pred{'then'.join(slug(m) for m in args.predict_model)}",
             f"seed{args.seed}",
         ]
         + (["aug"] if paired and args.augment_swap else [])
@@ -349,7 +349,7 @@ async def main_async(args: argparse.Namespace) -> None:
     cache = CachingLLM(enabled=not args.no_cache)
     pi = PolicyInduction(
         gen_llmc=[GoogleChoice(model=args.gen_model)],
-        predict_llmc=[GoogleChoice(model=args.predict_model)],
+        predict_llmc=[GoogleChoice(model=m) for m in args.predict_model],
         # beta=0.5, not 1.0. F-beta ignores true negatives, and on a 50/50 split
         # a trivial always-YES classifier scores F1=0.667 -- so beta=1.0 drove
         # the threshold to 0.01 (predict YES for everything). Same trap as the
@@ -386,13 +386,13 @@ async def main_async(args: argparse.Namespace) -> None:
             # control's cost by len(X_train) calls.
             n_fit = len(X_train) * per_sample
             print(f"  {args.gen_model} (generation): 0  (control: no induction)")
-            print(f"  {args.predict_model} (scoring): ~{n_fit}")
+            print(f"  {' -> '.join(args.predict_model)} (scoring): ~{n_fit}")
             total = n_fit + n_pred
         else:
             for k, v in est.items():
                 print(f"  {k}: ~{v}")
             total = n_pred + sum(est.values())
-        print(f"  {args.predict_model} (predict): ~{n_pred}")
+        print(f"  {' -> '.join(args.predict_model)} (predict): ~{n_pred}")
         print(f"  TOTAL: ~{total}")
         print("\nDry run complete. Drop --dry-run to execute.")
         return
@@ -640,8 +640,13 @@ def main() -> None:
                    help="Strong model: writes the policies. For a Pro run use "
                         "gemini-3.1-pro-preview -- there is no 3.5 Pro, and "
                         "2.5 Pro is retired.")
-    p.add_argument("--predict-model", default="gemini-2.5-flash-lite",
-                   help="Cheap model: evaluates each rule against each sample.")
+    p.add_argument("--predict-model", nargs="+", default=["gemini-2.5-flash-lite"],
+                   help="Cheap model(s): evaluates each rule against each "
+                        "sample. Pass more than one to make it a PRIORITY "
+                        "LIST -- the library tries the first model and falls "
+                        "back to the next on a failed call (e.g. a 503), not "
+                        "an ensemble of both. Order matters: put the model "
+                        "you want used first.")
     p.add_argument("--max-policies", type=int, default=15)
     p.add_argument("--samples-per-batch", type=int, default=20)
     p.add_argument("--max-gen-batches", type=int, default=10)

@@ -198,6 +198,8 @@ y         : YES        &larr; means argument_A won the delta</pre>
         <td class="n">0.6241</td><td class="bar-cell"><span class="bar"><i style="width:69.6%"></i></span></td></tr>
     <tr><td>Tan features, our reimplementation</td><td class="n">500</td><td>&mdash;</td>
         <td class="n">0.6191</td><td class="bar-cell"><span class="bar"><i style="width:67.6%"></i></span></td></tr>
+    <tr><td>vanilla LLM, no rules, single ask</td><td class="n">&mdash;</td><td>gemini-3.5-flash</td>
+        <td class="n">0.6072</td><td class="bar-cell"><span class="bar"><i style="width:62.9%"></i></span></td></tr>
     <tr class="base"><td>word count</td><td class="n">&mdash;</td><td>&mdash;</td>
         <td class="n">0.5967</td><td class="bar-cell"><span class="bar"><i style="width:58.7%"></i></span></td></tr>
   </tbody>
@@ -212,6 +214,12 @@ y         : YES        &larr; means argument_A won the delta</pre>
   (z&nbsp;=&nbsp;+2.18 against Tan alone, z&nbsp;=&nbsp;+2.59 against
   PolicyInduction refit under the same protocol). One run, one seed, like
   everything else on this page.</p>
+
+<p class="muted">The vanilla-LLM row asks the model directly &mdash; no induced
+  rules, no policy list, one prompt per pair: &ldquo;which reply is more
+  persuasive?&rdquo; Unlike every other row it is scored in a <b>single order,
+  no swap</b>, so it always commits to an answer and carries no protection
+  against positional bias. All 807 heldout pairs scored, no gaps.</p>
 
 <h3>Induced policies <span class="muted" style="font-weight:400">(all 15 given non-zero weight)</span></h3>
 
