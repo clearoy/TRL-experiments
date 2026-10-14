@@ -176,6 +176,35 @@
   0.14 AUC, so account size carries most of the signal; PolicyInduction has not been
   run content-only yet.</p>
 
+<h3>Combining the policy scores with the ML baseline</h3>
+<p class="muted">The policy scores each run already produced (30 or 10 per post) were added as
+  extra columns to the baseline features, and one model was fitted on train and scored on the same
+  500 test posts. No new LLM calls. Mean &plusmn; SD over the three runs of each setting.</p>
+
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Model</th><th scope="col">Policies</th><th scope="col">ROC-AUC</th><th scope="col">F0.5</th>
+        <th scope="col">Precision</th><th scope="col">Recall</th></tr>
+  </thead>
+  <tbody>
+    <tr class="base"><td>logistic regression, baseline features only</td><td class="n">&mdash;</td><td class="n">0.8392</td><td class="n">0.3938</td><td class="n">0.3667</td><td class="n">0.5593</td></tr>
+    <tr><td>logistic regression + policy scores</td><td class="n">30</td><td class="n">0.8376 &plusmn; 0.0127</td><td class="n">0.2313 &plusmn; 0.1462</td><td class="n">0.2073 &plusmn; 0.1494</td><td class="n">0.8362 &plusmn; 0.2838</td></tr>
+    <tr class="hi"><td>logistic regression + policy scores</td><td class="n">10</td><td class="n">0.8415 &plusmn; 0.0115</td><td class="n">0.3692 &plusmn; 0.1586</td><td class="n">0.5411 &plusmn; 0.1156</td><td class="n">0.2825 &plusmn; 0.2375</td></tr>
+    <tr class="base"><td>gradient boosting, baseline features only</td><td class="n">&mdash;</td><td class="n">0.7949</td><td class="n">0.2913</td><td class="n">0.5455</td><td class="n">0.1017</td></tr>
+    <tr><td>gradient boosting + policy scores</td><td class="n">30</td><td class="n">0.8024 &plusmn; 0.0026</td><td class="n">0.1650 &plusmn; 0.0073</td><td class="n">0.3790 &plusmn; 0.0477</td><td class="n">0.0508 &plusmn; 0.0000</td></tr>
+    <tr><td>gradient boosting + policy scores</td><td class="n">10</td><td class="n">0.8017 &plusmn; 0.0109</td><td class="n">0.2146 &plusmn; 0.0361</td><td class="n">0.4815 &plusmn; 0.0321</td><td class="n">0.0678 &plusmn; 0.0169</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="muted">The policy scores add no ranking value: logistic regression stays at about 0.84 ROC-AUC
+  with or without them, gradient boosting at about 0.80. Differences are inside the run-to-run spread.
+  F0.5 for the combined logistic regression is unreliable. In two of the 30-policy runs it flagged every
+  post as YES at the fixed 0.5 cut (recall 1.00, precision 0.12), so compare on ROC-AUC. The train policy scores
+  come from the same LLM that wrote the policies after seeing about 140 of those train rows, which if
+  anything favours the policy features.</p>
+
 <h3>Induced policies <span class="muted" style="font-weight:400">(10 policies, all given non-zero weight &middot; run 1 of the 10-policy setting, the highest F0.5 and ROC-AUC of its three runs)</span></h3>
 
 <div class="pol"><span class="w">&minus;20.9797</span> &nbsp;Avoid unsupported country, language, posting-time, or seasonal exclusions, allow anticipatory and off-season holiday appeal when otherwise corroborated, and treat missing captions or search phrases as unavailable evidence rather than positive signals or automatic disqualifiers.</div>
