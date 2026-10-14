@@ -9,9 +9,9 @@ Same layout as [`compas/`](../compas/) and [`cmv/`](../cmv/).
 ## Status
 
 - [x] `prepare_data.py` — public → train, private → test
-- [ ] `baselines.py` — traditional-ML baselines on the same split
-- [ ] `run_policy_induction.py` — the TRL algorithm under test
-- [ ] `compare.py` — comparison table
+- [x] `baselines.py` — traditional-ML baselines on the same split
+- [x] `run_policy_induction.py` — the TRL algorithm under test
+- [x] `compare.py` — comparison table
 
 ## Results
 

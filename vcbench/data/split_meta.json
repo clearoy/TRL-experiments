@@ -1,0 +1,11 @@
+{
+  "source": "library old_vcbench_evaluation/data (public=train, private=test)",
+  "features": [
+    "anonymised_prose"
+  ],
+  "target": "success",
+  "n_train": 4500,
+  "n_test": 4500,
+  "positive_rate_train": 0.09,
+  "positive_rate_test": 0.09
+}
