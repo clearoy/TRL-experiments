@@ -261,12 +261,12 @@ def main() -> None:
         help="Test rows to evaluate on; 0 (default) = the full test set. Must "
         "match what baselines.py used or the comparison is invalid.",
     )
-    p.add_argument("--gen-model", default="gpt-6-luna")
-    p.add_argument("--max-policies", type=int, default=20)
+    p.add_argument("--gen-model", default="gpt-6.1-sol")
+    p.add_argument("--max-policies", type=int, default=30)
     p.add_argument("--samples-per-batch", type=int, default=10)
     p.add_argument("--max-gen-batches", type=int, default=7)
-    p.add_argument("--policy-batch-size", type=int, default=10)
-    p.add_argument("--concurrency", type=int, default=3)
+    p.add_argument("--policy-batch-size", type=int, default=30)
+    p.add_argument("--concurrency", type=int, default=5)
     p.add_argument("--outdir", default="run01")
     p.add_argument(
         "--dry-run",
