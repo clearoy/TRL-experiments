@@ -6,6 +6,10 @@
   "split": "first 1500 popularity rows, seeded shuffle",
   "seed": 0,
   "target": "popularity",
+  "label": "YES = popularity >= train 90th percentile (11.5520)",
+  "popularity_cutoff": 11.552000000000001,
+  "n_yes_train": 100,
+  "n_yes_test": 59,
   "columns": [
     "pid",
     "uid",

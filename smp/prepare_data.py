@@ -3,7 +3,8 @@
 Only the train split of the Hugging Face dataset has labels, so the evaluation
 split is carved out of it: take the first N_TOTAL rows of the popularity file,
 join each to its post, user and video metadata, then split them into
-N_TRAIN / N_TEST with a seeded shuffle.
+N_TRAIN / N_TEST with a seeded shuffle. The binary label is YES for the top 10%
+of popularity (cutoff taken from train only).
 
 Prerequisite (gated dataset, needs `hf auth login` and accepted terms):
     snapshot_download("smpchallenge/SMP-Video", repo_type="dataset",
@@ -25,6 +26,7 @@ HERE = Path(__file__).resolve().parent
 DATA_DIR = HERE / "data"
 RAW = DATA_DIR / "raw" / "train"
 TARGET = "popularity"
+TOP_FRACTION = 0.10  # label YES = top 10% of popularity
 
 
 def read(name: str) -> pd.DataFrame:
@@ -52,6 +54,12 @@ def build(n_total: int, n_train: int, seed: int) -> None:
     train, test = shuffled.iloc[:n_train], shuffled.iloc[n_train:].reset_index(drop=True)
     assert len(train) == n_train and len(test) == n_total - n_train
 
+    # Cutoff comes from train only and is applied unchanged to test.
+    cutoff = float(train[TARGET].quantile(1 - TOP_FRACTION))
+    train, test = train.copy(), test.copy()
+    for d in (train, test):
+        d["label"] = (d[TARGET] >= cutoff).map({True: "YES", False: "NO"})
+
     train.to_parquet(DATA_DIR / "train.parquet")
     test.to_parquet(DATA_DIR / "test.parquet")
 
@@ -63,6 +71,10 @@ def build(n_total: int, n_train: int, seed: int) -> None:
         "split": f"first {n_total} popularity rows, seeded shuffle",
         "seed": seed,
         "target": TARGET,
+        "label": f"YES = popularity >= train 90th percentile ({cutoff:.4f})",
+        "popularity_cutoff": cutoff,
+        "n_yes_train": int((train["label"] == "YES").sum()),
+        "n_yes_test": int((test["label"] == "YES").sum()),
         "columns": list(df.columns),
         "popularity_mean_train": float(train[TARGET].mean()),
         "popularity_mean_test": float(test[TARGET].mean()),
