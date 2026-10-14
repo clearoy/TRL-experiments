@@ -17,8 +17,9 @@
 </nav>
 
 <header>
-  <h1>SMP Challenge</h1>
-  <div class="sub">Social Media Prediction &middot; not yet run</div>
+  <h1>PolicyInduction on SMP Challenge</h1>
+  <div class="sub">LLM-induced natural-language policies vs. traditional ML &middot;
+    top-10% popularity &middot; think-reason-learn <code>1801840</code></div>
 </header>
 
 <p><a href="https://smp-challenge.com/index.html">https://smp-challenge.com/index.html</a></p>
@@ -28,7 +29,7 @@
 <div class="grid">
   <div class="stat"><b>1,500</b><span>labelled posts used</span></div>
   <div class="stat"><b>1,000 / 500</b><span>train / test split</span></div>
-  <div class="stat"><b>1.22&ndash;13.35</b><span>popularity (regression target)</span></div>
+  <div class="stat"><b>10%</b><span>positive (top of popularity; 100 / 59 YES)</span></div>
   <div class="stat"><b>1,347</b><span>distinct users</span></div>
 </div>
 
@@ -36,15 +37,17 @@
   (<code>smpchallenge/SMP-Video</code> on Hugging Face, gated): short TikTok-style
   videos posted between Jan 2022 and Aug 2023. Only the train split has labels, so
   the 1,500 rows used here are the first 1,500 of its 4,000 labelled posts, split
-  1,000 / 500 with a seeded shuffle. The target is <code>popularity</code>, a
-  continuous score (median 8.75), so this is regression, not YES/NO like the other
-  benchmarks.</p>
+  1,000 / 500 with a seeded shuffle. The raw target <code>popularity</code> is a
+  continuous score (1.22&ndash;13.35, median 8.75). PolicyInduction predicts YES/NO,
+  so the label is YES for the <b>top 10%</b>: popularity &ge; 11.55, the train 90th
+  percentile, applied unchanged to test. That leaves 100 YES in train and 59 in
+  test (11.8%). The videos themselves are not used.</p>
 
 <h3>Columns</h3>
 <p class="muted">22 rows below cover all 24 columns. <b>Bold</b> columns hold text
   (free text or a short category string); the rest are numbers, a timestamp, a file
-  path or IDs. Of the model-usable columns, 3 are free text, 4 are categories and
-  11 are numbers.</p>
+  path or IDs. The 18 model inputs are 3 free text, 3 categories, 11 numbers and
+  the timestamp (<code>video_format</code> is dropped: always mp4).</p>
 <div class="card scroll">
   <table>
   <thead>
@@ -71,7 +74,7 @@
     <tr><td><b><code>video_format</code></b></td><td><b>category</b></td><td class="wrap-cell">All mp4</td></tr>
     <tr><td><b><code>music_title</code></b></td><td><b>free text</b></td><td class="wrap-cell">Title of the sound used, e.g. &ldquo;original sound&rdquo;</td></tr>
     <tr><td><code>music_duration</code></td><td>number</td><td class="wrap-cell">Seconds</td></tr>
-    <tr><td><code>video_path</code></td><td>path</td><td class="wrap-cell">Pointer to an .mp4 on Google Drive; <b>not downloaded yet</b></td></tr>
+    <tr><td><code>video_path</code></td><td>path</td><td class="wrap-cell">Pointer to an .mp4 on Google Drive; not downloaded, not used</td></tr>
     <tr><td><code>pid</code> <code>uid</code> <code>vid</code></td><td>id</td><td class="wrap-cell">Join keys only; not model input</td></tr>
   </tbody>
 </table>
@@ -80,6 +83,121 @@
 <p class="muted">Posts are joined to their user and video metadata; the build
   stops if any join leaves a gap, and none did. 51 users appear in both train and
   test, because the split is by post, not by user.</p>
+
+
+<h2>2 &nbsp;How the test is implemented</h2>
+
+<div class="card">
+  <table>
+  <thead>
+  <tr><th scope="col">Step</th><th scope="col">Detail</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Rows</td><td>First 1,500 labelled train rows, seeded shuffle (<code>seed=0</code>) &rarr; 1,000 / 500</td></tr>
+    <tr><td>Label</td><td>YES = popularity &ge; 11.55 (train 90th percentile) &rarr; 100 / 59 YES</td></tr>
+    <tr><td>Train</td><td>All <b>1,000</b> training rows</td></tr>
+    <tr><td>Test</td><td>All <b>500</b> rows &mdash; identical for every model</td></tr>
+    <tr><td>Inputs</td><td>18 columns: caption, suggested words, country, language, time, 7 user counts, video size and duration, music. Dropped: <code>pid</code>, <code>uid</code>, <code>vid</code>, <code>video_path</code>, <code>video_format</code></td></tr>
+    <tr><td>Baselines</td><td>Logistic regression and gradient boosting; counts log-scaled, categories one-hot, free text TF-IDF; fixed 0.5 cut</td></tr>
+    <tr><td>Encoding</td><td>sklearn: features above &nbsp;&middot;&nbsp; PolicyInduction: <code>column: value</code> text</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="muted">Both methods receive the same columns. One mismatch: the baselines
+  currently ignore <code>post_time</code> (it becomes a string no transformer
+  picks up), while PolicyInduction sees it. Also, 5 users have negative like/heart
+  counts; the baselines clip them to 0, PolicyInduction sees the raw values.</p>
+
+<h3>Run configuration</h3>
+<div class="card scroll">
+  <table>
+    <tr><th id="smp-t3r0c0">Generation model</th><td headers="smp-t3r0c0">gpt-6.1-sol</td>
+        <th id="smp-t3r0c2">Scoring model</th><td headers="smp-t3r0c2">jev-latest (TypeSafe)</td></tr>
+    <tr><th id="smp-t3r1c0">max_policies</th><td headers="smp-t3r1c0" class="n">30 and 10</td>
+        <th id="smp-t3r1c2">samples_per_batch</th><td headers="smp-t3r1c2" class="n">20</td></tr>
+    <tr><th id="smp-t3r2c0">max_gen_batches</th><td headers="smp-t3r2c0" class="n">7</td>
+        <th id="smp-t3r2c2">policy_batch_size</th><td headers="smp-t3r2c2" class="n">30</td></tr>
+    <tr><th id="smp-t3r3c0">beta</th><td headers="smp-t3r3c0" class="n">0.5</td>
+        <th id="smp-t3r3c2">penalty</th><td headers="smp-t3r3c2">L1</td></tr>
+    <tr><th id="smp-t3r4c0">Runs</th><td headers="smp-t3r4c0" class="n">3 per setting</td>
+        <th id="smp-t3r4c2">LLM calls per run</th><td headers="smp-t3r4c2" class="n">~1,500</td></tr>
+  </table>
+</div>
+
+<h2>3 &nbsp;Results</h2>
+
+<p class="muted">All models evaluated on the same 500-row test set (59 YES,
+  11.8% positive). Always-NO scores 88.2% accuracy, so accuracy says little;
+  ROC-AUC is the metric to read. Precision, recall and F0.5 move with the
+  decision threshold, which is chosen per run.</p>
+
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Model</th><th scope="col">Train rows</th><th scope="col">ROC-AUC</th><th scope="col">F0.5</th>
+        <th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">Accuracy</th></tr>
+  </thead>
+  <tbody>
+    <tr class="base"><td>logistic_regression (all columns)</td><td class="n">1,000</td><td class="n">0.8392</td><td class="n">0.3938</td><td class="n">0.3667</td><td class="n">0.5593</td><td class="n">0.8340</td></tr>
+    <tr class="base"><td>gradient_boosting (all columns)</td><td class="n">1,000</td><td class="n">0.7949</td><td class="n">0.2913</td><td class="n">0.5455</td><td class="n">0.1017</td><td class="n">0.8840</td></tr>
+    <tr class="base"><td>logistic_regression (content only)</td><td class="n">1,000</td><td class="n">0.7020</td><td class="n">0.3292</td><td class="n">0.3231</td><td class="n">0.3559</td><td class="n">0.8360</td></tr>
+    <tr class="base"><td>gradient_boosting (content only)</td><td class="n">1,000</td><td class="n">0.7276</td><td class="n">0.1351</td><td class="n">0.2308</td><td class="n">0.0508</td><td class="n">0.8680</td></tr>
+    <tr class=""><td><b>PolicyInduction</b>, 30 policies (mean of 3)</td><td class="n">1,000</td><td class="n">0.7962 &plusmn; 0.0207</td><td class="n">0.3380 &plusmn; 0.0877</td><td class="n">0.4893 &plusmn; 0.1562</td><td class="n">0.2486 &plusmn; 0.1575</td><td class="n">0.8700 &plusmn; 0.0151</td></tr>
+    <tr class="hi"><td><b>PolicyInduction</b>, 10 policies (mean of 3)</td><td class="n">1,000</td><td class="n">0.8049 &plusmn; 0.0055</td><td class="n">0.3740 &plusmn; 0.0762</td><td class="n">0.4120 &plusmn; 0.0889</td><td class="n">0.3220 &plusmn; 0.1345</td><td class="n">0.8606 &plusmn; 0.0285</td></tr>
+    <tr class="base"><td>majority class (all NO)</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td class="n">0.8820</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Individual PolicyInduction runs</h3>
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Run</th><th scope="col">ROC-AUC</th><th scope="col">F0.5</th><th scope="col">Precision</th>
+        <th scope="col">Recall</th><th scope="col">Accuracy</th><th scope="col">Threshold</th><th scope="col">C</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>30 policies, run 1</td><td class="n">0.8190</td><td class="n">0.3612</td><td class="n">0.3725</td><td class="n">0.3220</td><td class="n">0.8560</td><td class="n">0.24</td><td class="n">10</td></tr>
+    <tr><td>30 policies, run 2</td><td class="n">0.7912</td><td class="n">0.4118</td><td class="n">0.4286</td><td class="n">0.3559</td><td class="n">0.8680</td><td class="n">0.27</td><td class="n">10</td></tr>
+    <tr><td>30 policies, run 3</td><td class="n">0.7785</td><td class="n">0.2410</td><td class="n">0.6667</td><td class="n">0.0678</td><td class="n">0.8860</td><td class="n">0.54</td><td class="n">100</td></tr>
+    <tr class="hi"><td>10 policies, run 1</td><td class="n">0.8110</td><td class="n">0.4613</td><td class="n">0.4717</td><td class="n">0.4237</td><td class="n">0.8760</td><td class="n">0.22</td><td class="n">1000</td></tr>
+    <tr><td>10 policies, run 2</td><td class="n">0.8031</td><td class="n">0.3401</td><td class="n">0.4545</td><td class="n">0.1695</td><td class="n">0.8780</td><td class="n">0.29</td><td class="n">10</td></tr>
+    <tr><td>10 policies, run 3</td><td class="n">0.8005</td><td class="n">0.3207</td><td class="n">0.3099</td><td class="n">0.3729</td><td class="n">0.8277</td><td class="n">0.20</td><td class="n">10</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="muted">Identical settings gave F0.5 from 0.24 to 0.46, mostly because the
+  chosen threshold moves (0.20&ndash;0.54). The 10-policy run that scored best
+  (F0.5 0.46) was the first; its two repeats scored 0.34 and 0.32, so that
+  advantage did not hold. ROC-AUC is steadier (0.78&ndash;0.82) and sits below
+  logistic regression on all columns (0.84). The content-only baselines lose about
+  0.14 AUC, so account size carries most of the signal; PolicyInduction has not been
+  run content-only yet.</p>
+
+<h3>Induced policies <span class="muted" style="font-weight:400">(10 policies, all given non-zero weight &middot; run 1 of the 10-policy setting, the highest F0.5 and ROC-AUC of its three runs)</span></h3>
+
+<div class="pol"><span class="w">&minus;20.9797</span> &nbsp;Avoid unsupported country, language, posting-time, or seasonal exclusions, allow anticipatory and off-season holiday appeal when otherwise corroborated, and treat missing captions or search phrases as unavailable evidence rather than positive signals or automatic disqualifiers.</div>
+<div class="pol"><span class="w">+11.4931</span> &nbsp;Use follower reach and accumulated audience likes relative to posting volume as account context rather than post engagement, without double-counting likes and hearts, interpreting digg counts as received engagement, assuming uniformly successful posts, or imposing fixed thresholds.</div>
+<div class="pol"><span class="w">+8.0811</span> &nbsp;Predict YES only when multiple consistent signals strongly support top-tier popularity, defaulting to NO without making any isolated attribute or content category decisive.</div>
+<div class="pol"><span class="w">+5.3378</span> &nbsp;Allow modest-follower, prolific, sparsely captioned, or captionless accounts to qualify when available evidence strongly corroborates popularity, requiring stronger historical-response evidence as the topical premise becomes less identifiable and never treating account size alone as sufficient.</div>
+<div class="pol"><span class="w">+2.4597</span> &nbsp;Give corroborated humor, emotional resonance, targeted encouragement, childhood nostalgia, recognizable performances, distinctive animal behavior or occasion-specific pet content, concrete sensory relaxation, and large-scale prosocial projects additional weight without assuming the unseen video delivers their appeal.</div>
+<div class="pol"><span class="w">&minus;2.2434</span> &nbsp;Treat duration, resolution, aspect ratio, music source, and audio-length matching as context rather than popularity gates, with recognizable or reusable audio providing only limited corroboration and no automatic preference for shorter posts.</div>
+<div class="pol"><span class="w">&minus;1.9479</span> &nbsp;Treat generic motivation, fitness progress, cause hashtags, celebrity or fandom references, routine outfits, scenery, wildlife labels, disasters, sports predictions or hype edits, local service listings, aesthetic labels, viral hashtags, and vague mystery hooks as weak rather than disqualifying evidence requiring independent corroboration.</div>
+<div class="pol"><span class="w">+1.8698</span> &nbsp;Use suggested search phrases to clarify topics, techniques, review questions, formats, or recognizable entertainment references, distinguishing identifiable performances or nostalgic premises from generic fandom tags without treating search suggestions as proof of demand or delivered content.</div>
+<div class="pol"><span class="w">&minus;0.7768</span> &nbsp;Allow identifiable product evaluations, candid criticism, occasion-specific order packing, functional convenience, shopping-event relevance, interviews, and audience-facing comparisons to support popularity, but treat product predictions, promotional adjectives, discounts, brand lists, and profile-link prompts as insufficient alone.</div>
+<div class="pol"><span class="w">+0.5898</span> &nbsp;Favor identifiable instructional outcomes, recipes, project applications, beauty treatments, seasonal costumes, concrete upgrades, distinctive collections, and handmade processes over generic claims, while requiring corroboration because specificity, craftsmanship, and detailed explanations do not themselves establish popularity.</div>
+
+<p class="muted">Chosen after seeing the test scores, so it flatters the method. Weights
+  come from a weakly penalised fit (C&nbsp;=&nbsp;1000) on overlapping policies, so
+  individual signs, including the large negative first policy, should not be read as findings.</p>
+
+<footer>
+  3 runs per setting &middot; policy generation at <code>temperature=1.0</code>, so runs vary.
+  &nbsp;|&nbsp; Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a>
+  &nbsp;|&nbsp; Library commit <code>1801840</code>
+</footer>
 
 </div>
 </body>

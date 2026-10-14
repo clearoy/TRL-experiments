@@ -25,6 +25,7 @@ README, and results that are reproducible from the scripts alone.
 |---|---|---|
 | [`compas/`](compas/) | 2-year recidivism, 6,172 rows, 45.5% positive | PolicyInduction at parity with logistic regression |
 | [`cmv/`](cmv/) | ChangeMyView persuasion, 807 heldout pairs | PolicyInduction 0.6241 vs 0.5967 word count, level with an embedding baseline and with Tan et al. 2016. Result hinges on the scorer model |
+| [`smp/`](smp/) | Top-10% popularity of video posts, 500 test posts | PolicyInduction ROC-AUC 0.805 (3 runs), logistic regression 0.839; F0.5 varies 0.24-0.46 between identical runs |
 
 ## Setup
 
