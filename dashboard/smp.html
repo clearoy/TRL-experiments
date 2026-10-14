@@ -23,6 +23,64 @@
 
 <p><a href="https://smp-challenge.com/index.html">https://smp-challenge.com/index.html</a></p>
 
+<h2>1 &nbsp;Dataset</h2>
+
+<div class="grid">
+  <div class="stat"><b>1,500</b><span>labelled posts used</span></div>
+  <div class="stat"><b>1,000 / 500</b><span>train / test split</span></div>
+  <div class="stat"><b>1.22&ndash;13.35</b><span>popularity (regression target)</span></div>
+  <div class="stat"><b>1,347</b><span>distinct users</span></div>
+</div>
+
+<p class="muted" style="margin-top:14px">SMP-Video from the SMP Challenge
+  (<code>smpchallenge/SMP-Video</code> on Hugging Face, gated): short TikTok-style
+  videos posted between Jan 2022 and Aug 2023. Only the train split has labels, so
+  the 1,500 rows used here are the first 1,500 of its 4,000 labelled posts, split
+  1,000 / 500 with a seeded shuffle. The target is <code>popularity</code>, a
+  continuous score (median 8.75), so this is regression, not YES/NO like the other
+  benchmarks.</p>
+
+<h3>Columns</h3>
+<p class="muted">22 rows below cover all 24 columns. <b>Bold</b> columns hold text
+  (free text or a short category string); the rest are numbers, a timestamp, a file
+  path or IDs. Of the model-usable columns, 3 are free text, 4 are categories and
+  11 are numbers.</p>
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col">Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>popularity</code></td><td>number</td><td class="wrap-cell">Label. Continuous, 1.22&ndash;13.35</td></tr>
+    <tr><td><b><code>post_content</code></b></td><td><b>free text</b></td><td class="wrap-cell">Hashtag-style caption, comma-separated</td></tr>
+    <tr><td><b><code>post_suggested_words</code></b></td><td><b>free text</b></td><td class="wrap-cell">List of suggested search phrases; empty for 62% of posts</td></tr>
+    <tr><td><b><code>post_location</code></b></td><td><b>category</b></td><td class="wrap-cell">Country code; 64 countries, US 70%</td></tr>
+    <tr><td><b><code>post_text_language</code></b></td><td><b>category</b></td><td class="wrap-cell">English 82%</td></tr>
+    <tr><td><code>post_time</code></td><td>datetime</td><td class="wrap-cell">Jan 2022 &ndash; Aug 2023</td></tr>
+    <tr><td><code>user_follower_count</code></td><td>number</td><td class="wrap-cell">5 to 157M, median 66k; Spearman with popularity about 0.5</td></tr>
+    <tr><td><code>user_following_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
+    <tr><td><code>user_likes_count</code></td><td>number</td><td class="wrap-cell">Spearman with popularity about 0.5</td></tr>
+    <tr><td><code>user_video_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
+    <tr><td><code>user_digg_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
+    <tr><td><code>user_heart_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
+    <tr><td><code>user_friend_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
+    <tr><td><code>video_duration</code></td><td>number</td><td class="wrap-cell">Seconds, 4&ndash;600, median 23</td></tr>
+    <tr><td><code>video_height</code></td><td>number</td><td class="wrap-cell">Pixels</td></tr>
+    <tr><td><code>video_width</code></td><td>number</td><td class="wrap-cell">Pixels</td></tr>
+    <tr><td><b><code>video_ratio</code></b></td><td><b>category</b></td><td class="wrap-cell">87% are 540p</td></tr>
+    <tr><td><b><code>video_format</code></b></td><td><b>category</b></td><td class="wrap-cell">All mp4</td></tr>
+    <tr><td><b><code>music_title</code></b></td><td><b>free text</b></td><td class="wrap-cell">Title of the sound used, e.g. &ldquo;original sound&rdquo;</td></tr>
+    <tr><td><code>music_duration</code></td><td>number</td><td class="wrap-cell">Seconds</td></tr>
+    <tr><td><code>video_path</code></td><td>path</td><td class="wrap-cell">Pointer to an .mp4 on Google Drive; <b>not downloaded yet</b></td></tr>
+    <tr><td><code>pid</code> <code>uid</code> <code>vid</code></td><td>id</td><td class="wrap-cell">Join keys only; not model input</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="muted">Posts are joined to their user and video metadata; the build
+  stops if any join leaves a gap, and none did. 51 users appear in both train and
+  test, because the split is by post, not by user.</p>
+
 </div>
 </body>
 </html>
