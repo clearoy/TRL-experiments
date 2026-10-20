@@ -5,6 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PolicyInduction on SMP Challenge</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.pie-card{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--so:#a8a7a0}
+@media (prefers-color-scheme:dark){.pie-card{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--so:#6b6a66}}
+.pies{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:16px}
+.pies .card{margin-bottom:0}
+.pie-card h4{margin:0 0 4px;font-size:15px}
+.pie-body{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.pie{width:170px;height:170px;flex:none}
+.slice{stroke:var(--panel);stroke-width:2;transition:opacity .12s;cursor:default}
+.slice:hover,.slice:focus-visible{opacity:.78;outline:none}
+.s1{fill:var(--s1)}.s2{fill:var(--s2)}.s3{fill:var(--s3)}.s4{fill:var(--s4)}.s5{fill:var(--s5)}.so{fill:var(--so)}
+.pie-legend{list-style:none;margin:0;padding:0;font-size:13px;flex:1;min-width:150px}
+.pie-legend li{display:grid;grid-template-columns:12px 1fr auto 52px;gap:8px;align-items:center;margin-bottom:5px}
+.pie-legend .sw{width:12px;height:12px;border-radius:3px;display:block}
+.pie-legend .sw.s1{background:var(--s1)}.pie-legend .sw.s2{background:var(--s2)}.pie-legend .sw.s3{background:var(--s3)}.pie-legend .sw.s4{background:var(--s4)}.pie-legend .sw.s5{background:var(--s5)}.pie-legend .sw.so{background:var(--so)}
+.pie-legend .val,.pie-legend .pct{font-family:var(--mono);font-size:12px;text-align:right}
+.pie-legend .pct{color:var(--muted)}
+.pie-card details{margin-top:12px;font-size:13px}
+.pie-card summary{cursor:pointer;color:var(--muted)}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -41,6 +61,26 @@
   so the label is YES for the <b>top 10%</b>: popularity &ge; 11.55, the train 90th
   percentile, applied unchanged to test. That leaves 100 YES in train and 59 in
   test (11.8%). The videos themselves are not used.</p>
+
+<h3>Where the posts come from</h3>
+<div class="pies">
+  <div class="card pie-card">
+    <h4>Post location</h4>
+    <p class="muted" style="margin:0 0 10px;font-size:13px">Country code of the post. 64 countries; top 5 shown, the rest grouped.</p>
+    <div class="pie-body"><svg viewBox="0 0 180 180" role="img" aria-label="Pie chart" class="pie"><path class="slice s1" tabindex="0" d="M90 90 L90.00 6.00 A84 84 0 1 1 10.22 116.29 Z"><title>US: 1,049 posts (69.9%)</title></path><path class="slice s2" tabindex="0" d="M90 90 L10.22 116.29 A84 84 0 0 1 6.07 86.48 Z"><title>GB: 86 posts (5.7%)</title></path><path class="slice s3" tabindex="0" d="M90 90 L6.07 86.48 A84 84 0 0 1 9.90 64.71 Z"><title>CA: 63 posts (4.2%)</title></path><path class="slice s4" tabindex="0" d="M90 90 L9.90 64.71 A84 84 0 0 1 15.24 51.71 Z"><title>AU: 40 posts (2.7%)</title></path><path class="slice s5" tabindex="0" d="M90 90 L15.24 51.71 A84 84 0 0 1 19.84 43.81 Z"><title>ID: 26 posts (1.7%)</title></path><path class="slice so" tabindex="0" d="M90 90 L19.84 43.81 A84 84 0 0 1 90.00 6.00 Z"><title>Other (59 countries): 236 posts (15.7%)</title></path></svg><ul class="pie-legend"><li><i class="sw s1"></i><span class="lab">US</span><span class="val">1,049</span><span class="pct">69.9%</span></li><li><i class="sw s2"></i><span class="lab">GB</span><span class="val">86</span><span class="pct">5.7%</span></li><li><i class="sw s3"></i><span class="lab">CA</span><span class="val">63</span><span class="pct">4.2%</span></li><li><i class="sw s4"></i><span class="lab">AU</span><span class="val">40</span><span class="pct">2.7%</span></li><li><i class="sw s5"></i><span class="lab">ID</span><span class="val">26</span><span class="pct">1.7%</span></li><li><i class="sw so"></i><span class="lab">Other (59 countries)</span><span class="val">236</span><span class="pct">15.7%</span></li></ul></div>
+    <details><summary>Table view</summary>
+    <table style="min-width:0"><thead><tr><th scope="col">Value</th><th scope="col">Posts</th><th scope="col">Share</th></tr></thead><tbody><tr><td>US</td><td class="n">1,049</td><td class="n">69.9%</td></tr><tr><td>GB</td><td class="n">86</td><td class="n">5.7%</td></tr><tr><td>CA</td><td class="n">63</td><td class="n">4.2%</td></tr><tr><td>AU</td><td class="n">40</td><td class="n">2.7%</td></tr><tr><td>ID</td><td class="n">26</td><td class="n">1.7%</td></tr><tr><td>Other (59 countries)</td><td class="n">236</td><td class="n">15.7%</td></tr></tbody></table>
+    </details>
+  </div>
+  <div class="card pie-card">
+    <h4>Post text language</h4>
+    <p class="muted" style="margin:0 0 10px;font-size:13px">Language tag of the caption. 28 languages; top 5 shown, the rest grouped. &ldquo;un&rdquo; is assumed to mean undetermined.</p>
+    <div class="pie-body"><svg viewBox="0 0 180 180" role="img" aria-label="Pie chart" class="pie"><path class="slice s1" tabindex="0" d="M90 90 L90.00 6.00 A84 84 0 1 1 13.85 54.55 Z"><title>en: 1,229 posts (81.9%)</title></path><path class="slice s2" tabindex="0" d="M90 90 L13.85 54.55 A84 84 0 0 1 52.65 14.76 Z"><title>un (undetermined): 161 posts (10.7%)</title></path><path class="slice s3" tabindex="0" d="M90 90 L52.65 14.76 A84 84 0 0 1 69.11 8.64 Z"><title>es: 50 posts (3.3%)</title></path><path class="slice s4" tabindex="0" d="M90 90 L69.11 8.64 A84 84 0 0 1 73.22 7.69 Z"><title>id: 12 posts (0.8%)</title></path><path class="slice s5" tabindex="0" d="M90 90 L73.22 7.69 A84 84 0 0 1 74.95 7.36 Z"><title>pt: 5 posts (0.3%)</title></path><path class="slice so" tabindex="0" d="M90 90 L74.95 7.36 A84 84 0 0 1 90.00 6.00 Z"><title>Other (23 languages): 43 posts (2.9%)</title></path></svg><ul class="pie-legend"><li><i class="sw s1"></i><span class="lab">en</span><span class="val">1,229</span><span class="pct">81.9%</span></li><li><i class="sw s2"></i><span class="lab">un (undetermined)</span><span class="val">161</span><span class="pct">10.7%</span></li><li><i class="sw s3"></i><span class="lab">es</span><span class="val">50</span><span class="pct">3.3%</span></li><li><i class="sw s4"></i><span class="lab">id</span><span class="val">12</span><span class="pct">0.8%</span></li><li><i class="sw s5"></i><span class="lab">pt</span><span class="val">5</span><span class="pct">0.3%</span></li><li><i class="sw so"></i><span class="lab">Other (23 languages)</span><span class="val">43</span><span class="pct">2.9%</span></li></ul></div>
+    <details><summary>Table view</summary>
+    <table style="min-width:0"><thead><tr><th scope="col">Value</th><th scope="col">Posts</th><th scope="col">Share</th></tr></thead><tbody><tr><td>en</td><td class="n">1,229</td><td class="n">81.9%</td></tr><tr><td>un (undetermined)</td><td class="n">161</td><td class="n">10.7%</td></tr><tr><td>es</td><td class="n">50</td><td class="n">3.3%</td></tr><tr><td>id</td><td class="n">12</td><td class="n">0.8%</td></tr><tr><td>pt</td><td class="n">5</td><td class="n">0.3%</td></tr><tr><td>Other (23 languages)</td><td class="n">43</td><td class="n">2.9%</td></tr></tbody></table>
+    </details>
+  </div>
+</div>
 
 <h3>Columns</h3>
 <p class="muted">22 rows below cover all 24 columns. <b>Bold</b> columns hold text
