@@ -127,7 +127,7 @@ async def main_async(args: argparse.Namespace) -> None:
 
     pi = PolicyInduction(
         gen_llmc=[GoogleChoice(model=args.gen_model)],
-        predict_llmc=[GoogleChoice(model=args.predict_model)],
+        # decision_llmc omitted: the library default (TypeSafe jev-latest).
         # beta=0.5, not 1.0. F-beta ignores true negatives entirely, which is
         # the wrong family for a ~45% positive dataset where correctly
         # identifying non-recidivists matters as much as identifying
@@ -138,12 +138,8 @@ async def main_async(args: argparse.Namespace) -> None:
         # balanced-accuracy-optimal threshold selection exactly, so it buys the
         # correct operating point without needing to modify _fit_weights.
         config=WeightTrainerConfig(beta=0.5, penalty="l1"),
-        max_policy_length=args.max_policies,
-        class_ratio=(1.0, 1.0),
-        max_samples_as_context=args.samples_per_batch,
-        max_gen_batches=args.max_gen_batches,
-        policy_batch_size=args.policy_batch_size,
-        llm_semaphore_limit=args.concurrency,
+        gen_batches=((args.pos_per_batch, args.neg_per_batch), args.n_gen_batches),
+        max_raw_policies=args.max_raw_policies,
         save_path=outdir,
         name="compas_policy_induction",
         confirm_requests=False,
@@ -151,20 +147,17 @@ async def main_async(args: argparse.Namespace) -> None:
     )
 
     if args.dry_run:
-        # set_task() normally asks the LLM to write the generation template,
-        # which is itself a billable call -- so a dry run must supply its own
-        # stub template to stay at genuinely zero cost.
-        await pi.set_task(
-            task_description=TASK_DESCRIPTION,
-            instructions_template="STUB (dry run). Max <max_policy_length> policies.",
-        )
+        # set_task() asks the LLM to write the generation template, which is
+        # itself a billable call -- so a dry run sets a stub to stay at zero cost.
+        pi._task_description = TASK_DESCRIPTION
+        pi._pgen_instructions_template = "STUB (dry run)."
         pi._set_data(X_train, y_train)
         est = pi._estimate_fit_requests()
         print("\nEstimated fit requests (no calls made):")
         for label, count in est.items():
             print(f"  {label}: ~{count}")
-        n_predict = len(X_test) * -(-args.max_policies // args.policy_batch_size)
-        print(f"  {args.predict_model} (predict, upper bound): ~{n_predict}")
+        n_predict = len(X_test) * -(-args.max_raw_policies // 50)
+        print(f"  {pi.decision_llmc.model} (predict, upper bound): ~{n_predict}")
         print(f"  TOTAL upper bound: ~{sum(est.values()) + n_predict} requests")
         print("\nDry run complete. Drop --dry-run to execute.")
         return
@@ -189,10 +182,10 @@ async def main_async(args: argparse.Namespace) -> None:
     # Probability behind each decision, recovered from the fitted LR.
     pred_df["probability"] = pi.lr.predict_proba(V)[:, 1]
     pred_df["threshold"] = pi.threshold
-    # One column per policy (its 1/0 answer for this sample). Attached before
+    # One column per policy (Jev's P(YES) for this sample). Attached before
     # the sort so the vectors stay row-aligned with their sample_index.
-    for j, name in enumerate(pi._feature_order_):
-        pred_df[f"policy_{name}"] = V[:, j]
+    for j in range(len(pi.policies)):
+        pred_df[f"policy_{j}"] = V[:, j]
     pred_df = pred_df.set_index("sample_index").sort_index()
     if len(pred_df) < len(X_test):
         # predict() skips samples where no policy answer could be obtained.
@@ -221,11 +214,9 @@ async def main_async(args: argparse.Namespace) -> None:
     metrics["trl_commit"] = trl_commit()
     metrics["config"] = {
         "gen_model": args.gen_model,
-        "predict_model": args.predict_model,
-        "max_policies": args.max_policies,
-        "samples_per_batch": args.samples_per_batch,
-        "max_gen_batches": args.max_gen_batches,
-        "policy_batch_size": args.policy_batch_size,
+        "decision_model": pi.decision_llmc.model,
+        "max_raw_policies": args.max_raw_policies,
+        "gen_batches": [[args.pos_per_batch, args.neg_per_batch], args.n_gen_batches],
         "beta": pi.config.beta,
         "penalty": pi.config.penalty,
     }
@@ -264,12 +255,14 @@ def main() -> None:
         "match what baselines.py used or the comparison is invalid.",
     )
     p.add_argument("--gen-model", default="gemini-3.5-flash")
-    p.add_argument("--predict-model", default="gemini-2.5-flash-lite")
-    p.add_argument("--max-policies", type=int, default=20)
-    p.add_argument("--samples-per-batch", type=int, default=10)
-    p.add_argument("--max-gen-batches", type=int, default=7)
-    p.add_argument("--policy-batch-size", type=int, default=10)
-    p.add_argument("--concurrency", type=int, default=3)
+    p.add_argument("--pos-per-batch", type=int, default=5,
+                   help="YES samples shown per generation batch.")
+    p.add_argument("--neg-per-batch", type=int, default=5,
+                   help="NO samples shown per generation batch.")
+    p.add_argument("--n-gen-batches", type=int, default=7,
+                   help="Independent generation batches (no shared samples).")
+    p.add_argument("--max-raw-policies", type=int, default=30,
+                   help="Policies kept by the merge step and scored by Jev.")
     p.add_argument("--outdir", default="run01")
     p.add_argument(
         "--dry-run",
