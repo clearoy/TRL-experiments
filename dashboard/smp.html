@@ -83,21 +83,20 @@
 <p><mark style="background:var(--accent-soft);color:var(--ink);padding:2px 6px;border-radius:3px;font-weight:600">2,192 posts (55%) are both US and English.</mark></p>
 
 <h3>Columns</h3>
-<p class="muted">22 rows below cover all 24 columns. <b>Bold</b> columns hold text (free text or a short
-  category string). The 24 are 3 free text, 4 categories, 12 numbers (including the
-  <code>popularity</code> label), a timestamp, a file path and 3 IDs.</p>
+<p class="muted">24 columns in three groups: the <code>popularity</code> label, 8 about the user who posted
+  (an ID and 7 account counts), and 15 about the post and its video (two IDs, the caption and other post fields,
+  the video and its music, and the path to the video file). <b>Bold</b> columns hold text
+  (free text or a short category string).</p>
 <div class="card scroll">
   <table>
   <thead>
   <tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col">Notes</th></tr>
   </thead>
   <tbody>
+    <tr><th colspan="3" scope="colgroup">Label</th></tr>
     <tr><td><code>popularity</code></td><td>number</td><td class="wrap-cell">Label. Continuous, 1.22&ndash;13.35, median 8.73</td></tr>
-    <tr><td><b><code>post_content</code></b></td><td><b>free text</b></td><td class="wrap-cell">Hashtag-style caption, comma-separated; 63 are empty, 80 repeat another post&rsquo;s caption</td></tr>
-    <tr><td><b><code>post_suggested_words</code></b></td><td><b>free text</b></td><td class="wrap-cell">List of suggested search phrases (0&ndash;10); empty for 65% of posts</td></tr>
-    <tr><td><b><code>post_location</code></b></td><td><b>category</b></td><td class="wrap-cell">Country code; 93 countries, US 63%</td></tr>
-    <tr><td><b><code>post_text_language</code></b></td><td><b>category</b></td><td class="wrap-cell">46 languages; English 80%, &ldquo;un&rdquo; 12%</td></tr>
-    <tr><td><code>post_time</code></td><td>datetime</td><td class="wrap-cell">Jan 2022 &ndash; Aug 2023; volume grows from 168 posts in Q1 2022 to 1,041 in Q2 2023</td></tr>
+    <tr><th colspan="3" scope="colgroup">User information &middot; 8 columns</th></tr>
+    <tr><td><code>uid</code></td><td>id</td><td class="wrap-cell">User ID; join key</td></tr>
     <tr><td><code>user_follower_count</code></td><td>number</td><td class="wrap-cell">0 to 157M, median 70k; Spearman with popularity 0.54</td></tr>
     <tr><td><code>user_following_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
     <tr><td><code>user_likes_count</code></td><td>number</td><td class="wrap-cell">Spearman with popularity 0.57; negative for 11 posts</td></tr>
@@ -105,6 +104,14 @@
     <tr><td><code>user_digg_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
     <tr><td><code>user_heart_count</code></td><td>number</td><td class="wrap-cell">Same values as <code>user_likes_count</code>; negative for 11 posts</td></tr>
     <tr><td><code>user_friend_count</code></td><td>number</td><td class="wrap-cell">Zero for every post</td></tr>
+    <tr><th colspan="3" scope="colgroup">Post and video &middot; 15 columns</th></tr>
+    <tr><td><code>pid</code></td><td>id</td><td class="wrap-cell">Post ID; join key</td></tr>
+    <tr><td><code>vid</code></td><td>id</td><td class="wrap-cell">Video ID; join key</td></tr>
+    <tr><td><b><code>post_content</code></b></td><td><b>free text</b></td><td class="wrap-cell">Hashtag-style caption, comma-separated; 63 are empty, 80 repeat another post&rsquo;s caption</td></tr>
+    <tr><td><b><code>post_suggested_words</code></b></td><td><b>free text</b></td><td class="wrap-cell">List of suggested search phrases (0&ndash;10); empty for 65% of posts</td></tr>
+    <tr><td><b><code>post_location</code></b></td><td><b>category</b></td><td class="wrap-cell">Country code; 93 countries, US 63%</td></tr>
+    <tr><td><b><code>post_text_language</code></b></td><td><b>category</b></td><td class="wrap-cell">46 languages; English 80%, &ldquo;un&rdquo; 12%</td></tr>
+    <tr><td><code>post_time</code></td><td>datetime</td><td class="wrap-cell">Jan 2022 &ndash; Aug 2023; volume grows from 168 posts in Q1 2022 to 1,041 in Q2 2023</td></tr>
     <tr><td><code>video_duration</code></td><td>number</td><td class="wrap-cell">Seconds, 2&ndash;600, median 22</td></tr>
     <tr><td><code>video_height</code></td><td>number</td><td class="wrap-cell">Pixels</td></tr>
     <tr><td><code>video_width</code></td><td>number</td><td class="wrap-cell">Pixels</td></tr>
@@ -113,7 +120,6 @@
     <tr><td><b><code>music_title</code></b></td><td><b>free text</b></td><td class="wrap-cell">Title of the sound used; 40% are &ldquo;original sound&rdquo;</td></tr>
     <tr><td><code>music_duration</code></td><td>number</td><td class="wrap-cell">Seconds</td></tr>
     <tr><td><code>video_path</code></td><td>path</td><td class="wrap-cell">Pointer to the post&rsquo;s .mp4; all 4,000 files are on disk locally</td></tr>
-    <tr><td><code>pid</code> <code>uid</code> <code>vid</code></td><td>id</td><td class="wrap-cell">Join keys</td></tr>
   </tbody>
 </table>
 </div>
