@@ -26,7 +26,7 @@ Videos are copied with `cp -c` (APFS clone: instant, no extra disk until a copy
 is modified), falling back to a normal copy elsewhere.
 
 Run:
-    python smp/extract_clean.py
+    python smp/pipeline/extract_clean.py
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parents[1]  # smp/
 DATA = HERE / "data"
 RAW = DATA / "raw" / "train"
 RAW_VIDEO = DATA / "raw" / "video" / "video_file"

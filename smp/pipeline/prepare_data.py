@@ -21,7 +21,7 @@ The user counts needed for step 2 are read from the raw users file by `uid` and
 are not written to the output.
 
 Run:
-    python smp/prepare_data.py
+    python smp/pipeline/prepare_data.py
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import StratifiedGroupKFold
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parents[1]  # smp/
 DATA_DIR = HERE / "data"
 CLEAN = DATA_DIR / "clean" / "metadata.parquet"
 USERS = DATA_DIR / "raw" / "train" / "SMP-Video_anonymized_users_train.jsonl"
@@ -47,7 +47,7 @@ N_GROUPS = 5
 
 def build(top_frac: float, n_folds: int, seed: int) -> None:
     if not CLEAN.exists():
-        raise SystemExit(f"Missing {CLEAN}. Run extract_clean.py first.")
+        raise SystemExit(f"Missing {CLEAN}. Run pipeline/extract_clean.py first.")
     df = pd.read_parquet(CLEAN).drop(columns=["expected_popularity", "user_group"])
     users = pd.read_json(USERS, lines=True)[["uid", *GROUP_INPUTS]]
     df = df.merge(users, on="uid", how="left", validate="m:1")

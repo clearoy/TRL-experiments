@@ -5,7 +5,7 @@ log-scaled, categories one-hot, free text TF-IDF. Run with and without the
 account-size columns, matching run_policy_induction.py's --no-user-stats.
 
 Run:
-    python smp/baselines.py
+    python smp/legacy/baselines.py
 """
 
 from __future__ import annotations
@@ -36,8 +36,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from common import model_inputs  # noqa: E402
 
-DATA_DIR = HERE / "data"
-RESULTS_DIR = HERE / "results"
+DATA_DIR = HERE.parent / "data"
+RESULTS_DIR = HERE.parent / "results"
 TEXT = ["post_content", "post_suggested_words", "music_title"]
 
 

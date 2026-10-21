@@ -6,8 +6,8 @@ Pass --no-user-stats to hide the account-size columns and test the post content
 alone.
 
 Run:
-    python smp/run_policy_induction.py --dry-run
-    python smp/run_policy_induction.py
+    python smp/legacy/run_policy_induction.py --dry-run
+    python smp/legacy/run_policy_induction.py
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ from sklearn.metrics import (
 
 # think_reason_learn is not pip-installed in this venv; it resolves only when
 # the repo root is on sys.path. Drop this once `make install` has been run.
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -61,8 +61,8 @@ from think_reason_learn.policy_induction import (  # noqa: E402
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from common import model_inputs  # noqa: E402
-DATA_DIR = HERE / "data"
-RESULTS_DIR = HERE / "results"
+DATA_DIR = HERE.parent / "data"
+RESULTS_DIR = HERE.parent / "results"
 
 TASK_DESCRIPTION = (
     "Predict whether a short video post on a social platform will be among the "
@@ -126,7 +126,7 @@ def score(y_true, y_pred) -> dict:
 
 async def main_async(args: argparse.Namespace) -> None:
     X_train, y_train, X_test, test_df = load_split(args.n_train, args.n_test, not args.no_user_stats)
-    outdir = HERE / args.outdir
+    outdir = HERE.parent / args.outdir
     outdir.mkdir(parents=True, exist_ok=True)
 
     print(f"train: {len(X_train)} rows ({y_train.count('YES')} YES)")

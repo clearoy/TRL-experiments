@@ -7,7 +7,7 @@ features plus the policy scores, on train only, and scores it on the same 500
 test rows.
 
 Run:
-    python smp/combine.py
+    python smp/legacy/combine.py
 """
 
 from __future__ import annotations
@@ -36,10 +36,10 @@ RUNS = {
 
 
 def policy_matrices(run: str, n_train: int, test_index: pd.Index):
-    pp = pd.read_parquet(HERE / run / "policy_predictions.parquet")
+    pp = pd.read_parquet(HERE.parent / run / "policy_predictions.parquet")
     tr = pp.pivot(index="sample_index", columns="policy_id", values="pred").sort_index().astype(float)
     assert len(tr) == n_train, (run, len(tr))
-    te = pd.read_csv(HERE / "results" / f"policy_induction_{run}_predictions.csv")
+    te = pd.read_csv(HERE.parent / "results" / f"policy_induction_{run}_predictions.csv")
     te = te.set_index("sample_index").sort_index()
     cols = [c for c in te.columns if c.startswith("policy_")]
     te = te.reindex(test_index)[cols]  # rows the run skipped become NaN
@@ -62,8 +62,8 @@ def pipeline(X: pd.DataFrame, policy_cols: list[str], model) -> Pipeline:
 
 
 def main() -> None:
-    train = pd.read_parquet(HERE / "data" / "train.parquet")
-    test = pd.read_parquet(HERE / "data" / "test.parquet")
+    train = pd.read_parquet(HERE.parent / "data" / "train.parquet")
+    test = pd.read_parquet(HERE.parent / "data" / "test.parquet")
     y_tr = (train["label"] == "YES").astype(int).to_numpy()
     y_te = (test["label"] == "YES").astype(int).to_numpy()
     Xb_tr, Xb_te = model_inputs(train), model_inputs(test)
@@ -88,7 +88,7 @@ def main() -> None:
                 print(f"{n_pol:2d} policies {run:20s} {name:20s} auc={m['roc_auc']:.4f} f0.5={m['f0.5']:.4f} "
                       f"p={m['precision']:.4f} r={m['recall']:.4f}")
             out[run] = res
-    (HERE / "results" / "combined.json").write_text(json.dumps(out, indent=2))
+    (HERE.parent / "results" / "combined.json").write_text(json.dumps(out, indent=2))
 
 
 if __name__ == "__main__":
