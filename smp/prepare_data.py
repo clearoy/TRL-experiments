@@ -1,14 +1,27 @@
-"""Split the US + English SMP-Video posts by time: the later posts are the test set.
+"""Split the clean SMP posts by user, then label the top 20% inside each user group.
 
-Reads data/clean/metadata.parquet (written by extract_clean.py), sorts the posts
-by `post_time` and cuts at a fixed fraction, so every test post is newer than
-every train post. Ties on `post_time` are broken by `pid`, so the order is
-deterministic. `popularity` stays the raw continuous score; no binary label is
-added here.
+Reads data/clean/metadata.parquet (written by extract_clean.py) and writes one
+folder per account group:
+
+    smp/data/split/group_1/{train,test}.parquet   ... group_5/
+    smp/data/split_meta.json                      (tracked: how the split was made)
+
+Steps
+  1. Split users about 80/20 with StratifiedGroupKFold: every post of a user is on
+     one side, and the split is stratified by follower quintile so each tier
+     is represented on both sides.
+  2. Refit the group model (scheme E) on the training posts only: a linear fit
+     of popularity on log10 followers, following and video count. Cut its
+     prediction into quintiles using training edges, and apply the same model
+     and edges to test.
+  3. Inside each group, YES = popularity in the top 20% of that group's
+     training posts; the same cutoff is applied to the group's test posts.
+
+The user counts needed for step 2 are read from the raw users file by `uid` and
+are not written to the output.
 
 Run:
     python smp/prepare_data.py
-    python smp/prepare_data.py --test-frac 0.2
 """
 
 from __future__ import annotations
@@ -17,54 +30,96 @@ import argparse
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import StratifiedGroupKFold
 
 HERE = Path(__file__).resolve().parent
 DATA_DIR = HERE / "data"
 CLEAN = DATA_DIR / "clean" / "metadata.parquet"
+USERS = DATA_DIR / "raw" / "train" / "SMP-Video_anonymized_users_train.jsonl"
+OUT = DATA_DIR / "split"
+
+GROUP_INPUTS = ["user_follower_count", "user_following_count", "user_video_count"]
+N_GROUPS = 5
 
 
-def build(test_frac: float) -> None:
+def build(top_frac: float, n_folds: int, seed: int) -> None:
     if not CLEAN.exists():
         raise SystemExit(f"Missing {CLEAN}. Run extract_clean.py first.")
-    df = pd.read_parquet(CLEAN).sort_values(["post_time", "pid"]).reset_index(drop=True)
+    df = pd.read_parquet(CLEAN).drop(columns=["expected_popularity", "user_group"])
+    users = pd.read_json(USERS, lines=True)[["uid", *GROUP_INPUTS]]
+    df = df.merge(users, on="uid", how="left", validate="m:1")
+    assert not df[GROUP_INPUTS].isna().any().any()
 
-    n_test = round(len(df) * test_frac)
-    n_train = len(df) - n_test
-    train, test = df.iloc[:n_train].copy(), df.iloc[n_train:].copy()
-    train = train.reset_index(drop=True)
-    test = test.reset_index(drop=True)
-    assert train.post_time.max() <= test.post_time.min()
+    # 1. User-level split, stratified by follower quintile (no labels involved).
+    strata = pd.qcut(np.log10(df.user_follower_count.clip(lower=1)), 5, labels=False)
+    sgkf = StratifiedGroupKFold(n_splits=n_folds, shuffle=True, random_state=seed)
+    train_idx, test_idx = next(sgkf.split(df, strata, groups=df.uid))
+    df["split"] = "train"
+    df.loc[df.index[test_idx], "split"] = "test"
+    assert not set(df.uid[df.split == "train"]) & set(df.uid[df.split == "test"])
 
-    train.to_parquet(DATA_DIR / "train.parquet")
-    test.to_parquet(DATA_DIR / "test.parquet")
+    # 2. Group model on training posts only.
+    X = np.log10(df[GROUP_INPUTS].clip(lower=1))
+    is_tr = df.split == "train"
+    model = LinearRegression().fit(X[is_tr], df.popularity[is_tr])
+    df["expected_popularity"] = model.predict(X)
+    edges = np.quantile(df.expected_popularity[is_tr], np.linspace(0, 1, N_GROUPS + 1))
+    inner = edges[1:-1]  # test posts outside the train range fall into groups 1 or 5
+    df["user_group"] = np.searchsorted(inner, df.expected_popularity, side="right") + 1
 
     meta = {
-        "source": "data/clean/metadata.parquet (US + en posts of the 4,000 labelled train posts)",
-        "split": "by post_time: earliest posts are train, latest posts are test",
-        "test_frac": test_frac,
-        "n_train": len(train),
-        "n_test": len(test),
-        "train_time_range": [str(train.post_time.min()), str(train.post_time.max())],
-        "test_time_range": [str(test.post_time.min()), str(test.post_time.max())],
-        "same_timestamp_at_cut": bool(train.post_time.iloc[-1] == test.post_time.iloc[0]),
-        "popularity_mean_train": float(train.popularity.mean()),
-        "popularity_mean_test": float(test.popularity.mean()),
-        "popularity_std_train": float(train.popularity.std()),
-        "popularity_std_test": float(test.popularity.std()),
-        "users_in_both": int(len(set(train.uid) & set(test.uid))),
-        "test_posts_from_train_users": int(test.uid.isin(set(train.uid)).sum()),
-        "columns": list(df.columns),
+        "source": "data/clean/metadata.parquet",
+        "split": f"by user (StratifiedGroupKFold, {n_folds} folds, fold 0 = test), "
+        "stratified by follower quintile",
+        "seed": seed,
+        "label": f"YES = popularity >= the group's train {1 - top_frac:.0%} quantile (top {top_frac:.0%})",
+        "group_model": {
+            "fitted_on": "train posts only",
+            "inputs": [f"log10({c})" for c in GROUP_INPUTS],
+            "intercept": float(model.intercept_),
+            "coef": dict(zip(GROUP_INPUTS, map(float, model.coef_))),
+            "train_edges": [float(e) for e in edges],
+        },
+        "users_in_both": 0,
+        "groups": {},
     }
+
+    # 3. Label inside each group and write one folder per group.
+    keep = [c for c in df.columns if c not in GROUP_INPUTS + ["split"]] + ["label"]
+    for g in range(1, N_GROUPS + 1):
+        tr = df[(df.user_group == g) & is_tr].copy()
+        te = df[(df.user_group == g) & ~is_tr].copy()
+        cutoff = float(tr.popularity.quantile(1 - top_frac))
+        for part in (tr, te):
+            part["label"] = np.where(part.popularity >= cutoff, "YES", "NO")
+        folder = OUT / f"group_{g}"
+        folder.mkdir(parents=True, exist_ok=True)
+        tr[keep].reset_index(drop=True).to_parquet(folder / "train.parquet")
+        te[keep].reset_index(drop=True).to_parquet(folder / "test.parquet")
+        meta["groups"][f"group_{g}"] = {
+            "popularity_cutoff": cutoff,
+            "n_train": len(tr),
+            "n_test": len(te),
+            "n_yes_train": int((tr.label == "YES").sum()),
+            "n_yes_test": int((te.label == "YES").sum()),
+            "n_users_train": int(tr.uid.nunique()),
+            "n_users_test": int(te.uid.nunique()),
+        }
+
     (DATA_DIR / "split_meta.json").write_text(json.dumps(meta, indent=2))
-    print(json.dumps({k: v for k, v in meta.items() if k != "columns"}, indent=2))
+    print(json.dumps(meta["groups"], indent=2))
 
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--test-frac", type=float, default=0.2)
+    p.add_argument("--top-frac", type=float, default=0.2)
+    p.add_argument("--n-folds", type=int, default=5, help="Test share is 1/n-folds.")
+    p.add_argument("--seed", type=int, default=0)
     args = p.parse_args()
-    build(args.test_frac)
+    build(args.top_frac, args.n_folds, args.seed)
 
 
 if __name__ == "__main__":
