@@ -139,7 +139,7 @@
 </div>
 
 <p class="muted" style="margin-top:14px">Built by <code>smp/extract_clean.py</code> from the 4,000
-  labelled posts, with each post&rsquo;s video copied alongside. No train/test split yet.</p>
+  labelled posts, with each post&rsquo;s video copied alongside. The train/test split is in section 3.</p>
 
 <h3>Steps</h3>
 <ol>
@@ -173,8 +173,8 @@
 </table>
 </div>
 <p class="muted">Inside a group, follower count no longer tracks popularity (Spearman 0.07, against
-  0.52 across all posts). The group model is fitted on all 2,192 posts for now; it will be refitted
-  on the training posts once a split exists.</p>
+  0.52 across all posts). The groups here come from a fit on all 2,192 posts; section 3 refits
+  the model on the training posts only.</p>
 
 <h3>Why this grouping</h3>
 <p class="muted">Seven ways to group the 2,192 posts by account. &ldquo;Variance removed&rdquo; is how much
@@ -219,6 +219,51 @@
   </tbody>
 </table>
 </div>
+
+<h2>3 &nbsp;Split</h2>
+
+<div class="grid">
+  <div class="stat"><b>1,749 / 443</b><span>train / test posts (about 80 / 20)</span></div>
+  <div class="stat"><b>0</b><span>users on both sides</span></div>
+  <div class="stat"><b>Top 20%</b><span>label, within each group</span></div>
+  <div class="stat"><b>5</b><span>folders, one per group</span></div>
+</div>
+
+<p class="muted" style="margin-top:14px">Built by <code>smp/prepare_data.py</code> into
+  <code>smp/data/split/group_1</code> &hellip; <code>group_5</code>, each with
+  <code>train.parquet</code> and <code>test.parquet</code>.</p>
+
+<h3>Steps</h3>
+<ol>
+  <li><b>Split by user:</b> all of a user&rsquo;s posts go to one side. The split is stratified by
+    follower quintile, so every account tier appears in both train and test.</li>
+  <li><b>Refit the groups on train only:</b> the group model is fitted on the 1,749 training posts
+    (intercept 3.93, followers +1.62,
+    videos -1.23, following -0.12), and its
+    group edges come from training posts. Test posts get the same model and edges.</li>
+  <li><b>Label inside each group:</b> YES = the top 20% of popularity among the group&rsquo;s
+    training posts. The same cutoff is applied to the group&rsquo;s test posts.</li>
+</ol>
+
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Group</th><th scope="col">Train posts</th><th scope="col">Train YES</th>
+      <th scope="col">Test posts</th><th scope="col">Test YES</th><th scope="col">Popularity cutoff</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td class="n">350</td><td class="n">70</td><td class="n">83</td><td class="n">21</td><td class="n">7.42</td></tr>
+    <tr><td>2</td><td class="n">350</td><td class="n">70</td><td class="n">87</td><td class="n">19</td><td class="n">9.95</td></tr>
+    <tr><td>3</td><td class="n">349</td><td class="n">70</td><td class="n">73</td><td class="n">13</td><td class="n">10.66</td></tr>
+    <tr><td>4</td><td class="n">350</td><td class="n">70</td><td class="n">103</td><td class="n">21</td><td class="n">11.21</td></tr>
+    <tr><td>5</td><td class="n">350</td><td class="n">70</td><td class="n">97</td><td class="n">22</td><td class="n">11.74</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="muted">Test groups vary in size because their edges come from training posts. Group 3&rsquo;s
+  test set has only 13 positives, so its results will be the noisiest. 48 posts fall in a different
+  group here than in section 2, because of the train-only refit.</p>
 
 <footer>
   Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a>
