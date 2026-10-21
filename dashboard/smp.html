@@ -176,6 +176,31 @@
   0.52 across all posts). The group model is fitted on all 2,192 posts for now; it will be refitted
   on the training posts once a split exists.</p>
 
+<h3>Why this grouping</h3>
+<p class="muted">Seven ways to group the 2,192 posts by account. &ldquo;Variance removed&rdquo; is how much
+  popularity differs between groups; &ldquo;follower &rho; inside groups&rdquo; is the account effect left
+  over within a group (lower is better).</p>
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Scheme</th><th scope="col">Groups</th><th scope="col">Smallest group</th>
+      <th scope="col">Variance removed</th><th scope="col">Follower &rho; inside groups</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="wrap-cell">A. Creator tiers by followers (&lt;10k, 10k&ndash;100k, 100k&ndash;1M, 1M&ndash;10M, 10M+)</td><td class="n">5</td><td class="n">42</td><td class="n">25%</td><td class="n">0.09</td></tr>
+    <tr><td class="wrap-cell">B. Follower quintiles</td><td class="n">5</td><td class="n">438</td><td class="n">27%</td><td class="n">0.18</td></tr>
+    <tr><td class="wrap-cell">C. Follower tertiles &times; video-count tertiles</td><td class="n">9</td><td class="n">36</td><td class="n">25%</td><td class="n">0.24</td></tr>
+    <tr><td class="wrap-cell">D. k-means on followers, following, video count</td><td class="n">6</td><td class="n">140</td><td class="n">17%</td><td class="n">0.45</td></tr>
+    <tr class="hi"><td class="wrap-cell">E. Expected-popularity quintiles (used)</td><td class="n">5</td><td class="n">438</td><td class="n">33%</td><td class="n">0.07</td></tr>
+    <tr><td class="wrap-cell">F. Expected-popularity deciles</td><td class="n">10</td><td class="n">218</td><td class="n">35%</td><td class="n">0.00</td></tr>
+    <tr><td class="wrap-cell">G. Likes-per-video quintiles</td><td class="n">5</td><td class="n">438</td><td class="n">37%</td><td class="n">0.12</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="muted">E removes nearly as much as the best options while leaving almost no follower effect and
+  keeping groups large. F leaves too few posts per group once a test set is split off, and G uses
+  likes per video, which partly includes the post&rsquo;s own likes.</p>
+
 <h3>Columns kept</h3>
 <div class="card scroll">
   <table>
