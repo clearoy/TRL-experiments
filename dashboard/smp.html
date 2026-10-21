@@ -46,83 +46,82 @@
 <h2>1 &nbsp;Dataset</h2>
 
 <div class="grid">
-  <div class="stat"><b>1,500</b><span>labelled posts used</span></div>
-  <div class="stat"><b>1,000 / 500</b><span>train / test split</span></div>
-  <div class="stat"><b>10%</b><span>positive (top of popularity; 100 / 59 YES)</span></div>
-  <div class="stat"><b>1,347</b><span>distinct users</span></div>
+  <div class="stat"><b>4,000</b><span>labelled posts (full train file)</span></div>
+  <div class="stat"><b>3,488</b><span>distinct users</span></div>
+  <div class="stat"><b>1.22&ndash;13.35</b><span>popularity (label), median 8.73</span></div>
+  <div class="stat"><b>93</b><span>countries (46 languages)</span></div>
 </div>
 
 <p class="muted" style="margin-top:14px">SMP-Video from the SMP Challenge
   (<code>smpchallenge/SMP-Video</code> on Hugging Face, gated): short TikTok-style
-  videos posted between Jan 2022 and Aug 2023. Only the train split has labels, so
-  the 1,500 rows used here are the first 1,500 of its 4,000 labelled posts, split
-  1,000 / 500 with a seeded shuffle. The raw target <code>popularity</code> is a
-  continuous score (1.22&ndash;13.35, median 8.75). PolicyInduction predicts YES/NO,
-  so the label is YES for the <b>top 10%</b>: popularity &ge; 11.55, the train 90th
-  percentile, applied unchanged to test. That leaves 100 YES in train and 59 in
-  test (11.8%). The videos themselves are not used.</p>
+  videos posted between Jan 2022 and Aug 2023. This page describes the whole labelled
+  train file, 4,000 posts. The dataset&rsquo;s test files hold 2,000 more posts with no
+  popularity label, so they are not used. The label <code>popularity</code> is a
+  continuous score (mean 8.26, SD 2.86). Its 90th percentile is 11.69 (400 posts at or
+  above it). No train/test split is defined yet.</p>
 
 <h3>Where the posts come from</h3>
 <div class="pies">
   <div class="card pie-card">
     <h4>Post location</h4>
-    <p class="muted" style="margin:0 0 10px;font-size:13px">Country code of the post. 64 countries; top 5 shown, the rest grouped.</p>
-    <div class="pie-body"><svg viewBox="0 0 180 180" role="img" aria-label="Pie chart" class="pie"><path class="slice s1" tabindex="0" d="M90 90 L90.00 6.00 A84 84 0 1 1 10.22 116.29 Z"><title>US: 1,049 posts (69.9%)</title></path><path class="slice s2" tabindex="0" d="M90 90 L10.22 116.29 A84 84 0 0 1 6.07 86.48 Z"><title>GB: 86 posts (5.7%)</title></path><path class="slice s3" tabindex="0" d="M90 90 L6.07 86.48 A84 84 0 0 1 9.90 64.71 Z"><title>CA: 63 posts (4.2%)</title></path><path class="slice s4" tabindex="0" d="M90 90 L9.90 64.71 A84 84 0 0 1 15.24 51.71 Z"><title>AU: 40 posts (2.7%)</title></path><path class="slice s5" tabindex="0" d="M90 90 L15.24 51.71 A84 84 0 0 1 19.84 43.81 Z"><title>ID: 26 posts (1.7%)</title></path><path class="slice so" tabindex="0" d="M90 90 L19.84 43.81 A84 84 0 0 1 90.00 6.00 Z"><title>Other (59 countries): 236 posts (15.7%)</title></path></svg><ul class="pie-legend"><li><i class="sw s1"></i><span class="lab">US</span><span class="val">1,049</span><span class="pct">69.9%</span></li><li><i class="sw s2"></i><span class="lab">GB</span><span class="val">86</span><span class="pct">5.7%</span></li><li><i class="sw s3"></i><span class="lab">CA</span><span class="val">63</span><span class="pct">4.2%</span></li><li><i class="sw s4"></i><span class="lab">AU</span><span class="val">40</span><span class="pct">2.7%</span></li><li><i class="sw s5"></i><span class="lab">ID</span><span class="val">26</span><span class="pct">1.7%</span></li><li><i class="sw so"></i><span class="lab">Other (59 countries)</span><span class="val">236</span><span class="pct">15.7%</span></li></ul></div>
+    <p class="muted" style="margin:0 0 10px;font-size:13px">Country code of the post. 93 countries; top 5 shown, the rest grouped.</p>
+    <div class="pie-body"><svg viewBox="0 0 180 180" role="img" aria-label="Pie chart" class="pie"><path class="slice s1" tabindex="0" d="M90 90 L90.00 6.00 A84 84 0 1 1 27.96 146.63 Z"><title>US: 2,529 posts (63.2%)</title></path><path class="slice s2" tabindex="0" d="M90 90 L27.96 146.63 A84 84 0 0 1 11.06 118.70 Z"><title>GB: 249 posts (6.2%)</title></path><path class="slice s3" tabindex="0" d="M90 90 L11.06 118.70 A84 84 0 0 1 6.19 95.67 Z"><title>CA: 179 posts (4.5%)</title></path><path class="slice s4" tabindex="0" d="M90 90 L6.19 95.67 A84 84 0 0 1 6.91 77.64 Z"><title>PH: 137 posts (3.4%)</title></path><path class="slice s5" tabindex="0" d="M90 90 L6.91 77.64 A84 84 0 0 1 10.49 62.92 Z"><title>AU: 115 posts (2.9%)</title></path><path class="slice so" tabindex="0" d="M90 90 L10.49 62.92 A84 84 0 0 1 90.00 6.00 Z"><title>Other (88 countries): 791 posts (19.8%)</title></path></svg><ul class="pie-legend"><li><i class="sw s1"></i><span class="lab">US</span><span class="val">2,529</span><span class="pct">63.2%</span></li><li><i class="sw s2"></i><span class="lab">GB</span><span class="val">249</span><span class="pct">6.2%</span></li><li><i class="sw s3"></i><span class="lab">CA</span><span class="val">179</span><span class="pct">4.5%</span></li><li><i class="sw s4"></i><span class="lab">PH</span><span class="val">137</span><span class="pct">3.4%</span></li><li><i class="sw s5"></i><span class="lab">AU</span><span class="val">115</span><span class="pct">2.9%</span></li><li><i class="sw so"></i><span class="lab">Other (88 countries)</span><span class="val">791</span><span class="pct">19.8%</span></li></ul></div>
     <details><summary>Table view</summary>
-    <table style="min-width:0"><thead><tr><th scope="col">Value</th><th scope="col">Posts</th><th scope="col">Share</th></tr></thead><tbody><tr><td>US</td><td class="n">1,049</td><td class="n">69.9%</td></tr><tr><td>GB</td><td class="n">86</td><td class="n">5.7%</td></tr><tr><td>CA</td><td class="n">63</td><td class="n">4.2%</td></tr><tr><td>AU</td><td class="n">40</td><td class="n">2.7%</td></tr><tr><td>ID</td><td class="n">26</td><td class="n">1.7%</td></tr><tr><td>Other (59 countries)</td><td class="n">236</td><td class="n">15.7%</td></tr></tbody></table>
+    <table style="min-width:0"><thead><tr><th scope="col">Value</th><th scope="col">Posts</th><th scope="col">Share</th></tr></thead><tbody><tr><td>US</td><td class="n">2,529</td><td class="n">63.2%</td></tr><tr><td>GB</td><td class="n">249</td><td class="n">6.2%</td></tr><tr><td>CA</td><td class="n">179</td><td class="n">4.5%</td></tr><tr><td>PH</td><td class="n">137</td><td class="n">3.4%</td></tr><tr><td>AU</td><td class="n">115</td><td class="n">2.9%</td></tr><tr><td>Other (88 countries)</td><td class="n">791</td><td class="n">19.8%</td></tr></tbody></table>
     </details>
   </div>
   <div class="card pie-card">
     <h4>Post text language</h4>
-    <p class="muted" style="margin:0 0 10px;font-size:13px">Language tag of the caption. 28 languages; top 5 shown, the rest grouped. &ldquo;un&rdquo; is assumed to mean undetermined.</p>
-    <div class="pie-body"><svg viewBox="0 0 180 180" role="img" aria-label="Pie chart" class="pie"><path class="slice s1" tabindex="0" d="M90 90 L90.00 6.00 A84 84 0 1 1 13.85 54.55 Z"><title>en: 1,229 posts (81.9%)</title></path><path class="slice s2" tabindex="0" d="M90 90 L13.85 54.55 A84 84 0 0 1 52.65 14.76 Z"><title>un (undetermined): 161 posts (10.7%)</title></path><path class="slice s3" tabindex="0" d="M90 90 L52.65 14.76 A84 84 0 0 1 69.11 8.64 Z"><title>es: 50 posts (3.3%)</title></path><path class="slice s4" tabindex="0" d="M90 90 L69.11 8.64 A84 84 0 0 1 73.22 7.69 Z"><title>id: 12 posts (0.8%)</title></path><path class="slice s5" tabindex="0" d="M90 90 L73.22 7.69 A84 84 0 0 1 74.95 7.36 Z"><title>pt: 5 posts (0.3%)</title></path><path class="slice so" tabindex="0" d="M90 90 L74.95 7.36 A84 84 0 0 1 90.00 6.00 Z"><title>Other (23 languages): 43 posts (2.9%)</title></path></svg><ul class="pie-legend"><li><i class="sw s1"></i><span class="lab">en</span><span class="val">1,229</span><span class="pct">81.9%</span></li><li><i class="sw s2"></i><span class="lab">un (undetermined)</span><span class="val">161</span><span class="pct">10.7%</span></li><li><i class="sw s3"></i><span class="lab">es</span><span class="val">50</span><span class="pct">3.3%</span></li><li><i class="sw s4"></i><span class="lab">id</span><span class="val">12</span><span class="pct">0.8%</span></li><li><i class="sw s5"></i><span class="lab">pt</span><span class="val">5</span><span class="pct">0.3%</span></li><li><i class="sw so"></i><span class="lab">Other (23 languages)</span><span class="val">43</span><span class="pct">2.9%</span></li></ul></div>
+    <p class="muted" style="margin:0 0 10px;font-size:13px">Language tag of the caption. 46 languages; top 5 shown, the rest grouped. &ldquo;un&rdquo; is assumed to mean undetermined.</p>
+    <div class="pie-body"><svg viewBox="0 0 180 180" role="img" aria-label="Pie chart" class="pie"><path class="slice s1" tabindex="0" d="M90 90 L90.00 6.00 A84 84 0 1 1 10.53 62.79 Z"><title>en: 3,210 posts (80.2%)</title></path><path class="slice s2" tabindex="0" d="M90 90 L10.53 62.79 A84 84 0 0 1 50.23 16.01 Z"><title>un (undetermined): 476 posts (11.9%)</title></path><path class="slice s3" tabindex="0" d="M90 90 L50.23 16.01 A84 84 0 0 1 62.29 10.70 Z"><title>es: 100 posts (2.5%)</title></path><path class="slice s4" tabindex="0" d="M90 90 L62.29 10.70 A84 84 0 0 1 66.69 9.30 Z"><title>id: 35 posts (0.9%)</title></path><path class="slice s5" tabindex="0" d="M90 90 L66.69 9.30 A84 84 0 0 1 68.85 8.71 Z"><title>pt: 17 posts (0.4%)</title></path><path class="slice so" tabindex="0" d="M90 90 L68.85 8.71 A84 84 0 0 1 90.00 6.00 Z"><title>Other (41 languages): 162 posts (4.0%)</title></path></svg><ul class="pie-legend"><li><i class="sw s1"></i><span class="lab">en</span><span class="val">3,210</span><span class="pct">80.2%</span></li><li><i class="sw s2"></i><span class="lab">un (undetermined)</span><span class="val">476</span><span class="pct">11.9%</span></li><li><i class="sw s3"></i><span class="lab">es</span><span class="val">100</span><span class="pct">2.5%</span></li><li><i class="sw s4"></i><span class="lab">id</span><span class="val">35</span><span class="pct">0.9%</span></li><li><i class="sw s5"></i><span class="lab">pt</span><span class="val">17</span><span class="pct">0.4%</span></li><li><i class="sw so"></i><span class="lab">Other (41 languages)</span><span class="val">162</span><span class="pct">4.0%</span></li></ul></div>
     <details><summary>Table view</summary>
-    <table style="min-width:0"><thead><tr><th scope="col">Value</th><th scope="col">Posts</th><th scope="col">Share</th></tr></thead><tbody><tr><td>en</td><td class="n">1,229</td><td class="n">81.9%</td></tr><tr><td>un (undetermined)</td><td class="n">161</td><td class="n">10.7%</td></tr><tr><td>es</td><td class="n">50</td><td class="n">3.3%</td></tr><tr><td>id</td><td class="n">12</td><td class="n">0.8%</td></tr><tr><td>pt</td><td class="n">5</td><td class="n">0.3%</td></tr><tr><td>Other (23 languages)</td><td class="n">43</td><td class="n">2.9%</td></tr></tbody></table>
+    <table style="min-width:0"><thead><tr><th scope="col">Value</th><th scope="col">Posts</th><th scope="col">Share</th></tr></thead><tbody><tr><td>en</td><td class="n">3,210</td><td class="n">80.2%</td></tr><tr><td>un (undetermined)</td><td class="n">476</td><td class="n">11.9%</td></tr><tr><td>es</td><td class="n">100</td><td class="n">2.5%</td></tr><tr><td>id</td><td class="n">35</td><td class="n">0.9%</td></tr><tr><td>pt</td><td class="n">17</td><td class="n">0.4%</td></tr><tr><td>Other (41 languages)</td><td class="n">162</td><td class="n">4.0%</td></tr></tbody></table>
     </details>
   </div>
 </div>
 
+<p class="muted">2,192 posts (55%) are both US and English. Another 337 are US posts in another language, mostly &ldquo;un&rdquo;.</p>
+
 <h3>Columns</h3>
-<p class="muted">22 rows below cover all 24 columns. <b>Bold</b> columns hold text
-  (free text or a short category string); the rest are numbers, a timestamp, a file
-  path or IDs. The 18 model inputs are 3 free text, 3 categories, 11 numbers and
-  the timestamp (<code>video_format</code> is dropped: always mp4).</p>
+<p class="muted">22 rows below cover all 24 columns. <b>Bold</b> columns hold text (free text or a short
+  category string). The 24 are 3 free text, 4 categories, 12 numbers (including the
+  <code>popularity</code> label), a timestamp, a file path and 3 IDs.</p>
 <div class="card scroll">
   <table>
   <thead>
   <tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col">Notes</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>popularity</code></td><td>number</td><td class="wrap-cell">Label. Continuous, 1.22&ndash;13.35</td></tr>
-    <tr><td><b><code>post_content</code></b></td><td><b>free text</b></td><td class="wrap-cell">Hashtag-style caption, comma-separated</td></tr>
-    <tr><td><b><code>post_suggested_words</code></b></td><td><b>free text</b></td><td class="wrap-cell">List of suggested search phrases; empty for 62% of posts</td></tr>
-    <tr><td><b><code>post_location</code></b></td><td><b>category</b></td><td class="wrap-cell">Country code; 64 countries, US 70%</td></tr>
-    <tr><td><b><code>post_text_language</code></b></td><td><b>category</b></td><td class="wrap-cell">English 82%</td></tr>
-    <tr><td><code>post_time</code></td><td>datetime</td><td class="wrap-cell">Jan 2022 &ndash; Aug 2023</td></tr>
-    <tr><td><code>user_follower_count</code></td><td>number</td><td class="wrap-cell">5 to 157M, median 66k; Spearman with popularity about 0.5</td></tr>
+    <tr><td><code>popularity</code></td><td>number</td><td class="wrap-cell">Label. Continuous, 1.22&ndash;13.35, median 8.73</td></tr>
+    <tr><td><b><code>post_content</code></b></td><td><b>free text</b></td><td class="wrap-cell">Hashtag-style caption, comma-separated; 63 are empty, 80 repeat another post&rsquo;s caption</td></tr>
+    <tr><td><b><code>post_suggested_words</code></b></td><td><b>free text</b></td><td class="wrap-cell">List of suggested search phrases (0&ndash;10); empty for 65% of posts</td></tr>
+    <tr><td><b><code>post_location</code></b></td><td><b>category</b></td><td class="wrap-cell">Country code; 93 countries, US 63%</td></tr>
+    <tr><td><b><code>post_text_language</code></b></td><td><b>category</b></td><td class="wrap-cell">46 languages; English 80%, &ldquo;un&rdquo; 12%</td></tr>
+    <tr><td><code>post_time</code></td><td>datetime</td><td class="wrap-cell">Jan 2022 &ndash; Aug 2023; volume grows from 168 posts in Q1 2022 to 1,041 in Q2 2023</td></tr>
+    <tr><td><code>user_follower_count</code></td><td>number</td><td class="wrap-cell">0 to 157M, median 70k; Spearman with popularity 0.54</td></tr>
     <tr><td><code>user_following_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
-    <tr><td><code>user_likes_count</code></td><td>number</td><td class="wrap-cell">Spearman with popularity about 0.5</td></tr>
+    <tr><td><code>user_likes_count</code></td><td>number</td><td class="wrap-cell">Spearman with popularity 0.57; negative for 11 posts</td></tr>
     <tr><td><code>user_video_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
     <tr><td><code>user_digg_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
-    <tr><td><code>user_heart_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
-    <tr><td><code>user_friend_count</code></td><td>number</td><td class="wrap-cell"></td></tr>
-    <tr><td><code>video_duration</code></td><td>number</td><td class="wrap-cell">Seconds, 4&ndash;600, median 23</td></tr>
+    <tr><td><code>user_heart_count</code></td><td>number</td><td class="wrap-cell">Same values as <code>user_likes_count</code>; negative for 11 posts</td></tr>
+    <tr><td><code>user_friend_count</code></td><td>number</td><td class="wrap-cell">Zero for every post</td></tr>
+    <tr><td><code>video_duration</code></td><td>number</td><td class="wrap-cell">Seconds, 2&ndash;600, median 22</td></tr>
     <tr><td><code>video_height</code></td><td>number</td><td class="wrap-cell">Pixels</td></tr>
     <tr><td><code>video_width</code></td><td>number</td><td class="wrap-cell">Pixels</td></tr>
-    <tr><td><b><code>video_ratio</code></b></td><td><b>category</b></td><td class="wrap-cell">87% are 540p</td></tr>
+    <tr><td><b><code>video_ratio</code></b></td><td><b>category</b></td><td class="wrap-cell">540p 86%, 720p 12%, 480p 1%, 360p under 1%</td></tr>
     <tr><td><b><code>video_format</code></b></td><td><b>category</b></td><td class="wrap-cell">All mp4</td></tr>
-    <tr><td><b><code>music_title</code></b></td><td><b>free text</b></td><td class="wrap-cell">Title of the sound used, e.g. &ldquo;original sound&rdquo;</td></tr>
+    <tr><td><b><code>music_title</code></b></td><td><b>free text</b></td><td class="wrap-cell">Title of the sound used; 40% are &ldquo;original sound&rdquo;</td></tr>
     <tr><td><code>music_duration</code></td><td>number</td><td class="wrap-cell">Seconds</td></tr>
-    <tr><td><code>video_path</code></td><td>path</td><td class="wrap-cell">Pointer to an .mp4 on Google Drive; not downloaded, not used</td></tr>
-    <tr><td><code>pid</code> <code>uid</code> <code>vid</code></td><td>id</td><td class="wrap-cell">Join keys only; not model input</td></tr>
+    <tr><td><code>video_path</code></td><td>path</td><td class="wrap-cell">Pointer to the post&rsquo;s .mp4; all 4,000 files are on disk locally</td></tr>
+    <tr><td><code>pid</code> <code>uid</code> <code>vid</code></td><td>id</td><td class="wrap-cell">Join keys</td></tr>
   </tbody>
 </table>
 </div>
 
-<p class="muted">Posts are joined to their user and video metadata; the build
-  stops if any join leaves a gap, and none did. 51 users appear in both train and
-  test, because the split is by post, not by user.</p>
-
+<p class="muted">Every post joins to its user and video metadata, with no gaps. 324 users have more than
+  one post (up to 12), so the 4,000 posts come from 3,488 users, and user columns repeat for those
+  users. Likes per video (user likes divided by video count) tracks popularity best of the simple
+  features, with Spearman 0.65.</p>
 
 <footer>
   Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a>
