@@ -43,7 +43,7 @@
 
 <p><a href="https://smp-challenge.com/index.html">https://smp-challenge.com/index.html</a></p>
 
-<h2>1 &nbsp;Dataset</h2>
+<h2>1 &nbsp;Raw dataset</h2>
 
 <div class="grid">
   <div class="stat"><b>4,000</b><span>labelled posts (full train file)</span></div>
@@ -128,6 +128,72 @@
   one post (up to 12), so the 4,000 posts come from 3,488 users, and user columns repeat for those
   users. Likes per video (user likes divided by video count) tracks popularity best of the simple
   features, with Spearman 0.65.</p>
+
+<h2>2 &nbsp;Clean dataset</h2>
+
+<div class="grid">
+  <div class="stat"><b>2,192</b><span>posts (US and English)</span></div>
+  <div class="stat"><b>1,942</b><span>distinct users</span></div>
+  <div class="stat"><b>5</b><span>user groups, about 438 posts each</span></div>
+  <div class="stat"><b>17</b><span>columns, user counts removed</span></div>
+</div>
+
+<p class="muted" style="margin-top:14px">Built by <code>smp/extract_clean.py</code> from the 4,000
+  labelled posts, with each post&rsquo;s video copied alongside. No train/test split yet.</p>
+
+<h3>Steps</h3>
+<ol>
+  <li><b>Filter:</b> keep posts with <code>post_location</code> = US and
+    <code>post_text_language</code> = en (2,192 of 4,000). Nothing else is removed.</li>
+  <li><b>Group by account:</b> predict popularity from the account alone, then cut that
+    prediction into five equal groups, so posts are compared with posts from similar accounts.
+    <pre>expected_popularity = 3.84 + 1.64 &times; log10(followers)
+                    &minus; 1.26 &times; log10(videos posted)
+                    &minus; 0.10 &times; log10(following)</pre>
+    Likes, heart and digg counts are left out: they partly include the post&rsquo;s own likes.</li>
+  <li><b>Drop the account columns:</b> the 7 <code>user_*</code> counts are removed, so only the
+    group carries account information. <code>post_location</code> and
+    <code>post_text_language</code> are removed too, being the same on every row.</li>
+</ol>
+
+<h3>User groups</h3>
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Group</th><th scope="col">Posts</th><th scope="col">Expected popularity</th>
+      <th scope="col">Median followers</th><th scope="col">Mean popularity</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1 (weakest accounts)</td><td class="n">439</td><td class="n">3.74 &ndash; 6.81</td><td class="n">1,032</td><td class="n">5.62</td></tr>
+    <tr><td>2</td><td class="n">438</td><td class="n">6.82 &ndash; 7.90</td><td class="n">18,350</td><td class="n">7.71</td></tr>
+    <tr><td>3</td><td class="n">438</td><td class="n">7.90 &ndash; 8.78</td><td class="n">84,800</td><td class="n">8.45</td></tr>
+    <tr><td>4</td><td class="n">438</td><td class="n">8.78 &ndash; 9.72</td><td class="n">382,750</td><td class="n">9.31</td></tr>
+    <tr><td>5 (strongest accounts)</td><td class="n">439</td><td class="n">9.72 &ndash; 13.90</td><td class="n">2,400,000</td><td class="n">10.18</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="muted">Inside a group, follower count no longer tracks popularity (Spearman 0.07, against
+  0.52 across all posts). The group model is fitted on all 2,192 posts for now; it will be refitted
+  on the training posts once a split exists.</p>
+
+<h3>Columns kept</h3>
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Kind</th><th scope="col">Columns</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Label</td><td class="wrap-cell"><code>popularity</code></td></tr>
+    <tr><td>Group</td><td class="wrap-cell"><code>user_group</code> (1&ndash;5), <code>expected_popularity</code></td></tr>
+    <tr><td>Post</td><td class="wrap-cell"><code>post_content</code>, <code>post_suggested_words</code>, <code>post_time</code></td></tr>
+    <tr><td>Video</td><td class="wrap-cell"><code>video_duration</code>, <code>video_height</code>, <code>video_width</code>,
+      <code>video_ratio</code>, <code>video_format</code>, <code>music_title</code>, <code>music_duration</code>,
+      <code>video_path</code></td></tr>
+    <tr><td>IDs</td><td class="wrap-cell"><code>pid</code>, <code>vid</code>, <code>uid</code>
+      (<code>uid</code> kept only so a split can keep each user&rsquo;s posts together)</td></tr>
+  </tbody>
+</table>
+</div>
 
 <footer>
   Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a>
