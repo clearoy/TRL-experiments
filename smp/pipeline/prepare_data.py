@@ -1,10 +1,17 @@
 """Split the ready SMP posts by user, then label the top 20% inside each user group.
 
 Reads data/clean/ready_data.parquet (written by make_ready.py) and writes one
-folder per account group, keeping every column of ready_data plus `label`:
+pooled split, keeping every column of ready_data plus `label`:
 
-    smp/data/split/group_1/{train,test}.parquet   ... group_5/
-    smp/data/split_meta.json                      (tracked: how the split was made)
+    smp/data/split/train.parquet
+    smp/data/split/test.parquet
+    smp/data/split_meta.json      (tracked: how the split was made)
+
+The user groups control for account size through the label (each group has its
+own top-20% cutoff, so every group is 20% YES); they are not separate datasets.
+One model trains on all groups and is tested on all groups, which keeps the
+test set large (about 430 posts, 87 YES) while leaving almost no account effect
+in the label. Results per group can be read off with `user_group`.
 
 Steps
   1. Split users about 80/20 with StratifiedGroupKFold: every post of a user is on
@@ -87,18 +94,14 @@ def build(top_frac: float, n_folds: int, seed: int) -> None:
         "groups": {},
     }
 
-    # 3. Label inside each group and write one folder per group.
+    # 3. Label inside each group, then write one pooled train and test file.
     keep = [c for c in df.columns if c not in GROUP_INPUTS + ["split"]] + ["label"]
+    df["label"] = None
     for g in range(1, N_GROUPS + 1):
-        tr = df[(df.user_group == g) & is_tr].copy()
-        te = df[(df.user_group == g) & ~is_tr].copy()
-        cutoff = float(tr.popularity.quantile(1 - top_frac))
-        for part in (tr, te):
-            part["label"] = np.where(part.popularity >= cutoff, "YES", "NO")
-        folder = OUT / f"group_{g}"
-        folder.mkdir(parents=True, exist_ok=True)
-        tr[keep].reset_index(drop=True).to_parquet(folder / "train.parquet")
-        te[keep].reset_index(drop=True).to_parquet(folder / "test.parquet")
+        in_g = df.user_group == g
+        cutoff = float(df.popularity[in_g & is_tr].quantile(1 - top_frac))
+        df.loc[in_g, "label"] = np.where(df.popularity[in_g] >= cutoff, "YES", "NO")
+        tr, te = df[in_g & is_tr], df[in_g & ~is_tr]
         meta["groups"][f"group_{g}"] = {
             "popularity_cutoff": cutoff,
             "n_train": len(tr),
@@ -108,9 +111,18 @@ def build(top_frac: float, n_folds: int, seed: int) -> None:
             "n_users_train": int(tr.uid.nunique()),
             "n_users_test": int(te.uid.nunique()),
         }
+    OUT.mkdir(parents=True, exist_ok=True)
+    train, test = df[is_tr][keep].reset_index(drop=True), df[~is_tr][keep].reset_index(drop=True)
+    train.to_parquet(OUT / "train.parquet")
+    test.to_parquet(OUT / "test.parquet")
+    meta["total"] = {
+        "n_train": len(train), "n_test": len(test),
+        "n_yes_train": int((train.label == "YES").sum()), "n_yes_test": int((test.label == "YES").sum()),
+        "columns": keep,
+    }
 
     (DATA_DIR / "split_meta.json").write_text(json.dumps(meta, indent=2))
-    print(json.dumps(meta["groups"], indent=2))
+    print(json.dumps({**meta["groups"], "total": {k: v for k, v in meta["total"].items() if k != "columns"}}, indent=2))
 
 
 def main() -> None:

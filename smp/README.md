@@ -17,8 +17,8 @@ smp/
 │   │                        (drops posts without a description)
 │   ├── make_ready.py        merged_data -> data/clean/ready_data.parquet (model-ready:
 │   │                        ids, label, group, 15 content features, model_text)
-│   └── prepare_data.py      ready_data -> data/split/group_1..5/{train,test}.parquet
-│                            (split by user, top 20% within each group = YES)
+│   └── prepare_data.py      ready_data -> data/split/{train,test}.parquet (by user,
+│                            80/20; YES = top 20% within each of 5 user groups)
 ├── research/
 │   └── video_extraction/  the prompt study that chose design V4 (prompts.py, run.py)
 ├── legacy/                the earlier random-split experiment (1,500 posts, top 10%).
@@ -29,8 +29,8 @@ smp/
     ├── clean/               ready_data.parquet (model input), merged_data.parquet, metadata.parquet, videos/,
     │                        video_content.jsonl, clean_meta.json; see its README
     ├── research/            results of the video-extraction prompt study
-    ├── split/               (not built yet) group_1 ... group_5, train/test parquet
-    └── split_meta.json      (not built yet) how the split was made; tracked
+    ├── split/               train.parquet (1,731 posts) and test.parquet (436 posts)
+    └── split_meta.json      how the split was made, per-group cutoffs and counts; tracked
 ```
 
 ## Run
