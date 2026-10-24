@@ -21,6 +21,9 @@ smp/
 │                            80/20; YES = top 20% within each of 5 user groups)
 ├── baselines.py           ML baselines on the split (TF-IDF of model_text + video length;
 │                          logistic regression, random forest, gradient boosting)
+├── run_policy_induction.py  PolicyInduction on the split (gpt-6.1-sol writes policies,
+│                          Jev scores them; input: model_text only)
+├── combine.py             adds a run's policy scores to the TF-IDF models (no LLM calls)
 ├── research/
 │   └── video_extraction/  the prompt study that chose design V4 (prompts.py, run.py)
 ├── legacy/                the earlier random-split experiment (1,500 posts, top 10%).
@@ -44,6 +47,8 @@ python smp/pipeline/merge_data.py
 python smp/pipeline/make_ready.py
 python smp/pipeline/prepare_data.py
 python smp/baselines.py
+python smp/run_policy_induction.py --outdir run01
+python smp/combine.py --run run01
 ```
 
 Use the library's interpreter (`../think-reason-learn/.venv/bin/python`); see the
