@@ -23,6 +23,8 @@ smp/
 │                          logistic regression, random forest, gradient boosting)
 ├── run_policy_induction.py  PolicyInduction on the split (gpt-6.1-sol writes policies,
 │                          Jev scores them; input: model_text only)
+├── run_rrf.py             RRF (Random Rule Forest) on the split: gpt-6.1-sol writes YES/NO
+│                          questions, Jev answers them, elastic-net combines
 ├── combine.py             adds a run's policy scores to the TF-IDF models (no LLM calls)
 ├── research/
 │   └── video_extraction/  the prompt study that chose design V4 (prompts.py, run.py)
@@ -49,6 +51,7 @@ python smp/pipeline/prepare_data.py
 python smp/baselines.py
 python smp/run_policy_induction.py --outdir run01
 python smp/combine.py --run run01
+python smp/run_rrf.py --outdir rrf01
 ```
 
 Use the library's interpreter (`../think-reason-learn/.venv/bin/python`); see the
