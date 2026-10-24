@@ -42,10 +42,10 @@
   </a>
   <a href="smp.html">
     <h3>SMP Challenge</h3>
-    <div class="task">Social media popularity &middot; 4,000 labelled posts</div>
-    <div class="head">&mdash;</div>
-    <div class="headnote">dataset described, not yet run</div>
-    <div class="verdict">planned</div>
+    <div class="task">Video popularity within account size &middot; 436 test posts</div>
+    <div class="head">0.618 / 0.595</div>
+    <div class="headnote">ROC-AUC for RRF / PolicyInduction, against 0.682 for TF-IDF logistic regression on the same input</div>
+    <div class="verdict">below the baseline</div>
   </a>
 </div>
 
@@ -86,9 +86,16 @@
         <td class="n">0.6241</td>
         <td class="n">0.6344 <span class="pos">embeddings, 500 pairs</span></td>
         <td class="n">0.5967 <span class="pos">word count</span></td></tr>
+    <tr><td><a href="smp.html">SMP Challenge</a></td>
+        <td>Top 20% popularity within account size</td>
+        <td class="n">436 posts</td>
+        <td class="n">0.5952 <span class="pos">PI, ROC-AUC</span></td>
+        <td class="n">0.6819 <span class="pos">TF-IDF LR, ROC-AUC</span></td>
+        <td class="n">0.5000 <span class="pos">ROC-AUC of a constant</span></td></tr>
   </tbody>
 </table>
 </div>
+<p class="muted">COMPAS and ChangeMyView report accuracy; SMP reports ROC-AUC (20% of posts are positive).</p>
 
 <footer>
   Source: <a href="https://github.com/clearoy/TRL-experiments">clearoy/TRL-experiments</a>

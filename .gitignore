@@ -17,6 +17,7 @@
 
 # Per-run model artifacts (policies.parquet, lr.joblib, report.md, checkpoints)
 */run*/
+*/rrf*/
 */smoke/
 
 # Python

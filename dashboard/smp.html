@@ -38,7 +38,7 @@
 
 <header>
   <h1>PolicyInduction on SMP Challenge</h1>
-  <div class="sub">Social media popularity &middot; dataset</div>
+  <div class="sub">Social media popularity &middot; video content vs. top 20% within account size</div>
 </header>
 
 <p><a href="https://smp-challenge.com/index.html">https://smp-challenge.com/index.html</a></p>
@@ -265,6 +265,82 @@ Video:
   positives each (AUC uncertain by about &plusmn;0.15). Pooled, the test set has 436 posts and
   84 positives (about &plusmn;0.07), and the label still controls for account size. Results per
   group are possible but rough.</p>
+
+<h2>4 &nbsp;Results</h2>
+
+<div class="grid">
+  <div class="stat"><b>0.682</b><span>TF-IDF + logistic regression (ROC-AUC)</span></div>
+  <div class="stat"><b>0.618</b><span>RRF</span></div>
+  <div class="stat"><b>0.595</b><span>PolicyInduction</span></div>
+  <div class="stat"><b>0.560</b><span>account size alone (check)</span></div>
+</div>
+
+<p class="muted" style="margin-top:14px">All models read the same input (<code>model_text</code>) and are tested
+  on the same 436 posts (84 YES, 19.3%). ROC-AUC is the main metric (0.5 = chance); &ldquo;by group&rdquo; is
+  the mean AUC inside each user group; the last column is the paired bootstrap difference from TF-IDF +
+  logistic regression on the same posts. RRF and PolicyInduction: questions or policies written by
+  <code>gpt-6.1-sol</code>, scored by Jev. Single runs.</p>
+
+<div class="card scroll">
+  <table>
+  <thead>
+  <tr><th scope="col">Model</th><th scope="col">ROC-AUC [95% CI]</th><th scope="col">By group</th>
+      <th scope="col">Precision in top 20%</th><th scope="col">vs TF-IDF logistic</th></tr>
+  </thead>
+  <tbody>
+    <tr class="base"><td>TF-IDF + logistic regression</td><td class="n">0.682 [0.61&ndash;0.74]</td><td class="n">0.665</td><td class="n">0.402</td><td class="n">&mdash;</td></tr>
+    <tr class="base"><td>TF-IDF + random forest</td><td class="n">0.678 [0.61&ndash;0.74]</td><td class="n">0.666</td><td class="n">0.379</td><td class="n">-0.003 [-0.04, +0.04]</td></tr>
+    <tr class="base"><td>TF-IDF + gradient boosting</td><td class="n">0.596 [0.53&ndash;0.66]</td><td class="n">0.583</td><td class="n">0.322</td><td class="n">&mdash;</td></tr>
+    <tr class="hi"><td><b>RRF</b> (rrf01)</td><td class="n">0.618 [0.55&ndash;0.68]</td><td class="n">0.598</td><td class="n">0.299</td><td class="n">-0.065 [-0.14, +0.01]</td></tr>
+    <tr class="hi"><td><b>PolicyInduction</b> (run01)</td><td class="n">0.595 [0.53&ndash;0.66]</td><td class="n">0.579</td><td class="n">0.276</td><td class="n">-0.087 [-0.15, -0.02]</td></tr>
+    <tr><td>TF-IDF + PolicyInduction scores, random forest</td><td class="n">0.697 [0.63&ndash;0.76]</td><td class="n">0.680</td><td class="n">0.368</td><td class="n">+0.015 [-0.02, +0.05]</td></tr>
+    <tr><td>TF-IDF + PolicyInduction scores, logistic</td><td class="n">0.656 [0.59&ndash;0.72]</td><td class="n">0.638</td><td class="n">0.322</td><td class="n">-0.026 [-0.07, +0.02]</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Content predicts the within-group label above chance: TF-IDF reaches 0.68, and among the 20% of posts
+  it ranks highest, 40% are truly in their group&rsquo;s top 20% (twice the base rate). RRF (0.618) and
+  PolicyInduction (0.595) are below it; PolicyInduction&rsquo;s gap is outside the noise, RRF&rsquo;s is
+  borderline. Adding PolicyInduction&rsquo;s policy scores to TF-IDF does not change the result.</p>
+
+<h3>Checks</h3>
+<div class="card scroll">
+  <table>
+  <thead><tr><th scope="col">Input (TF-IDF + logistic regression, or a single score)</th><th scope="col">ROC-AUC [95% CI]</th></tr></thead>
+  <tbody>
+    <tr><td>Account size only (<code>expected_popularity</code>)</td><td class="n">0.560 [0.49&ndash;0.63]</td></tr>
+    <tr><td>Caption only</td><td class="n">0.677 [0.61&ndash;0.74]</td></tr>
+    <tr><td>Video description only</td><td class="n">0.673 [0.60&ndash;0.73]</td></tr>
+    <tr><td>Video length only</td><td class="n">0.480 [0.41&ndash;0.55]</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="muted">Account size alone scores near chance, so the within-group label does control for it. Caption
+  alone matches the full input, as does the video description alone: for word counts they carry the same
+  (largely topical) signal. Video length carries none.</p>
+
+<h3>RRF questions <span class="muted" style="font-weight:400">(39 of 58 kept; top 8 by weight)</span></h3>
+<div class="pol"><span class="w">+1.21</span> &nbsp;Does the post connect a featured physical object to a personal relationship or life milestone by explaining who gave it to the creator or what personal occasion it commemorates?</div>
+<div class="pol"><span class="w">+1.06</span> &nbsp;Does the video use a prerecorded spoken audio clip as humorous commentary on what is visibly happening, rather than merely lip-syncing to it or using it as background sound?</div>
+<div class="pol"><span class="w">+0.90</span> &nbsp;Is the video&#x27;s main focus creating a cozy, peaceful, or eerie atmosphere through scenery and music, rather than giving instructions, reviewing products, or presenting a spoken story?</div>
+<div class="pol"><span class="w">+0.86</span> &nbsp;Does the video prominently feature action-synchronized handling sounds (such as clicks, scraping, slicing, pouring, or tapping) that let viewers hear the main activity, rather than relying only on speech, music, or general background ambience?</div>
+<div class="pol"><span class="w">+0.80</span> &nbsp;Does the video provide an exact numerical quantity, measurement, or duration for a preparation or making step it visibly demonstrates (such as an ingredient amount, heating time, or nail-tip gap), rather than only prices, discounts, or descriptive statistics?</div>
+<div class="pol"><span class="w">&minus;0.66</span> &nbsp;Does the video require following two different verbal messages at once: audible speech or dialogue and on-screen explanatory text conveying different information, rather than subtitles, brief labels, or a title?</div>
+<div class="pol"><span class="w">&minus;0.64</span> &nbsp;Does the creator explicitly frame the video as showing a private space, possessions, or behind-the-scenes activity they can access through their job, rather than something ordinarily accessible to customers or the public?</div>
+<div class="pol"><span class="w">+0.60</span> &nbsp;Does the video demonstrate a practical hack that repurposes an object for a function other than its usual intended use, rather than merely using a specialized tool or product as designed?</div>
+
+<h3>PolicyInduction policies <span class="muted" style="font-weight:400">(14 of 29 kept; top 6 by weight)</span></h3>
+<div class="pol"><span class="w">+2.87</span> &nbsp;Favor YES when scenery or interiors immediately establish a distinctive focal point and sustain sensory or emotional immersion through complementary views, revealing movement, and fitting sound.</div>
+<div class="pol"><span class="w">&minus;2.29</span> &nbsp;Favor YES when pacing, cuts, camera movement, captions, and sound reveal meaningful new details, allowing atmosphere to breathe while compressing repetitive procedural work.</div>
+<div class="pol"><span class="w">+1.54</span> &nbsp;Favor YES when instruction addresses a specific everyday need with accessible, clearly demonstrated steps and a convincing completed result.</div>
+<div class="pol"><span class="w">+1.27</span> &nbsp;Favor YES when product content visibly demonstrates distinctive benefits through application, testing, cleanup, or completed use rather than relying on claims.</div>
+<div class="pol"><span class="w">+1.24</span> &nbsp;Favor YES when text, dialogue, audio, and visible behavior establish an immediately understandable, relatable joke and reinforce it through concise variations or a well-timed reveal.</div>
+<div class="pol"><span class="w">&minus;1.11</span> &nbsp;Favor YES when a cohesive montage delivers multiple concrete ideas or successive reveals, with visual changes, text, and audio reinforcing the central premise.</div>
+<p class="muted">RRF&rsquo;s questions are concrete and checkable (a gift&rsquo;s story, audio used as commentary,
+  synchronised handling sounds, exact quantities); PolicyInduction&rsquo;s policies are broad quality
+  judgements. Weights come from regressions over overlapping features, so individual signs should not be
+  read as findings.</p>
 
 <footer>
   Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a>
