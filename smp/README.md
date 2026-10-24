@@ -16,7 +16,7 @@ smp/
 │   ├── merge_data.py        descriptions + metadata -> data/clean/merged_data.parquet
 │   │                        (drops posts without a description)
 │   ├── make_ready.py        merged_data -> data/clean/ready_data.parquet (model-ready:
-│   │                        ids, label, group, 15 content features)
+│   │                        ids, label, group, 15 content features, model_text)
 │   └── prepare_data.py      ready_data -> data/split/group_1..5/{train,test}.parquet
 │                            (split by user, top 20% within each group = YES)
 ├── research/

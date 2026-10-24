@@ -18,6 +18,13 @@ One row per post. Columns fall into two roles:
       n_scenes, n_spoken_lines, n_on_screen_texts
       video_description         the full text record of the video (stands in for it)
 
+  model_text                    one block holding everything a model should read:
+                                caption, timing, music, length, orientation,
+                                resolution, and a compact video description
+                                (fields, timeline with per-segment audio, timed
+                                transcript and on-screen text, each said once).
+                                PolicyInduction and the ML baselines use this column.
+
 Column names are written to be read: PolicyInduction shows each row to the LLM
 as `column: value` lines, so the name is part of the signal.
 
@@ -50,6 +57,7 @@ FEATURES = [
     "video_content_type", "video_structure",
     "n_scenes", "n_spoken_lines", "n_on_screen_texts",
     "video_description",
+    "model_text",
 ]
 
 
@@ -57,6 +65,47 @@ def caption(raw: str) -> str:
     """The raw caption is its words joined by commas; restore the spaces."""
     words = [w.strip() for w in (raw or "").split(",") if w.strip()]
     return " ".join(words) if words else "(no caption)"
+
+
+RECORD_FIELDS = [
+    ("Summary", "summary"), ("Content type", "content_type"), ("Topic", "topic"),
+    ("Format", "format"), ("Hook (first 3 s)", "hook"), ("People", "people"),
+    ("Setting", "setting"), ("Filming", "filming"), ("Editing", "editing"),
+    ("Audio", "audio"), ("Tone", "tone"), ("Call to action", "call_to_action"),
+    ("Products or brands", "products_or_brands"),
+]
+
+
+def compact_video(rec: dict) -> str:
+    """The description with speech and on-screen text listed once, with times."""
+    lines = [f"  {label}: {rec[key]}" for label, key in RECORD_FIELDS]
+    lines.append("  Timeline:")
+    lines += [f"    {s['start']:.0f}-{s['end']:.0f}s: {s['visual']} | audio: {s['audio']}"
+              for s in rec["segments"]]
+    if rec["transcript"]:
+        lines.append("  Transcript:")
+        lines += [f"    {u['time']:.0f}s {u['speaker']}: {u['text']}" for u in rec["transcript"]]
+    else:
+        lines.append("  Transcript: none")
+    if rec["on_screen_text"]:
+        lines.append("  On-screen text:")
+        lines += [f"    {t['time']:.0f}s: {t['text']}" for t in rec["on_screen_text"]]
+    else:
+        lines.append("  On-screen text: none")
+    return "\n".join(lines)
+
+
+def model_text(row: dict, rec: dict) -> str:
+    return "\n".join([
+        f"Caption: {row['caption']}",
+        f"Posted: {row['post_weekday']}, {row['posted_at_utc']}",
+        f"Music: {row['music_title']}",
+        f"Video length: {row['video_duration_seconds']} seconds",
+        f"Orientation: {row['video_orientation']}",
+        f"Resolution: {row['video_resolution']}",
+        "Video:",
+        compact_video(rec),
+    ])
 
 
 def orientation(h: int, w: int) -> str:
@@ -91,7 +140,10 @@ def main() -> None:
         "n_spoken_lines": m.desc_n_transcript_lines,
         "n_on_screen_texts": m.desc_n_on_screen_text,
         "video_description": m.description_text,
-    })[ID_COLUMNS + FEATURES]
+    })
+    records = [json.loads(j) for j in m.description_json]
+    ready["model_text"] = [model_text(row, rec) for row, rec in zip(ready.to_dict("records"), records)]
+    ready = ready[ID_COLUMNS + FEATURES]
 
     assert ready.pid.is_unique and not ready.isna().any().any()
     ready.to_parquet(READY)
@@ -103,6 +155,8 @@ def main() -> None:
         "rows": len(ready),
         "id_columns": ID_COLUMNS,
         "feature_columns": FEATURES,
+        "model_input": "model_text (caption, timing, music, length, orientation, resolution, "
+        "compact video description); the other feature columns are its parts",
         "excluded": {
             "post_suggested_words": "platform-generated search suggestions; tracks popularity "
             "within every account group, so possibly a leak",
