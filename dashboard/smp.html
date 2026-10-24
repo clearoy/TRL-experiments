@@ -132,19 +132,19 @@
 <h2>2 &nbsp;Clean dataset</h2>
 
 <div class="grid">
-  <div class="stat"><b>2,192</b><span>posts (US and English)</span></div>
-  <div class="stat"><b>1,942</b><span>distinct users</span></div>
-  <div class="stat"><b>5</b><span>user groups, about 438 posts each</span></div>
-  <div class="stat"><b>17</b><span>columns, user counts removed</span></div>
+  <div class="stat"><b>2,167</b><span>posts (US and English), each with a video description</span></div>
+  <div class="stat"><b>1,922</b><span>distinct users</span></div>
+  <div class="stat"><b>5</b><span>user groups by account size</span></div>
+  <div class="stat"><b>25</b><span>posts discarded (description blocked)</span></div>
 </div>
 
-<p class="muted" style="margin-top:14px">Built by <code>smp/pipeline/extract_clean.py</code> from the 4,000
-  labelled posts, with each post&rsquo;s video copied alongside. The train/test split is in section 3.</p>
+<p class="muted" style="margin-top:14px">Built by <code>smp/pipeline/</code> from the 4,000 labelled
+  posts. The split is in section 3.</p>
 
 <h3>Steps</h3>
 <ol>
   <li><b>Filter:</b> keep posts with <code>post_location</code> = US and
-    <code>post_text_language</code> = en (2,192 of 4,000). Nothing else is removed.</li>
+    <code>post_text_language</code> = en (2,192 of 4,000).</li>
   <li><b>Group by account:</b> predict popularity from the account alone, then cut that
     prediction into five equal groups, so posts are compared with posts from similar accounts.
     <pre>expected_popularity = 3.84 + 1.64 &times; log10(followers)
@@ -152,8 +152,12 @@
                     &minus; 0.10 &times; log10(following)</pre>
     Likes, heart and digg counts are left out: they partly include the post&rsquo;s own likes.</li>
   <li><b>Drop the account columns:</b> the 7 <code>user_*</code> counts are removed, so only the
-    group carries account information. <code>post_location</code> and
-    <code>post_text_language</code> are removed too, being the same on every row.</li>
+    group carries account information; <code>post_location</code> and
+    <code>post_text_language</code> too, being the same on every row.</li>
+  <li><b>Describe every video:</b> Gemini (<code>gemini-3.5-flash</code>) watches each video and
+    writes a full text record: summary and fields, a timeline, the timed transcript and on-screen
+    text. It sees only the video. 25 descriptions were blocked by Gemini&rsquo;s recitation filter
+    (mostly long, music-heavy videos); those posts are discarded, leaving 2,167.</li>
 </ol>
 
 <h3>User groups</h3>
@@ -164,17 +168,16 @@
       <th scope="col">Median followers</th><th scope="col">Mean popularity</th></tr>
   </thead>
   <tbody>
-    <tr><td>1 (weakest accounts)</td><td class="n">439</td><td class="n">3.74 &ndash; 6.81</td><td class="n">1,032</td><td class="n">5.62</td></tr>
+    <tr><td>1 (weakest accounts)</td><td class="n">438</td><td class="n">3.74 &ndash; 6.81</td><td class="n">1,027</td><td class="n">5.61</td></tr>
     <tr><td>2</td><td class="n">438</td><td class="n">6.82 &ndash; 7.90</td><td class="n">18,350</td><td class="n">7.71</td></tr>
-    <tr><td>3</td><td class="n">438</td><td class="n">7.90 &ndash; 8.78</td><td class="n">84,800</td><td class="n">8.45</td></tr>
-    <tr><td>4</td><td class="n">438</td><td class="n">8.78 &ndash; 9.72</td><td class="n">382,750</td><td class="n">9.31</td></tr>
-    <tr><td>5 (strongest accounts)</td><td class="n">439</td><td class="n">9.72 &ndash; 13.90</td><td class="n">2,400,000</td><td class="n">10.18</td></tr>
+    <tr><td>3</td><td class="n">431</td><td class="n">7.90 &ndash; 8.78</td><td class="n">84,100</td><td class="n">8.43</td></tr>
+    <tr><td>4</td><td class="n">428</td><td class="n">8.78 &ndash; 9.72</td><td class="n">383,400</td><td class="n">9.32</td></tr>
+    <tr><td>5 (strongest accounts)</td><td class="n">432</td><td class="n">9.72 &ndash; 13.90</td><td class="n">2,400,000</td><td class="n">10.17</td></tr>
   </tbody>
 </table>
 </div>
 <p class="muted">Inside a group, follower count no longer tracks popularity (Spearman 0.07, against
-  0.52 across all posts). The groups here come from a fit on all 2,192 posts; section 3 refits
-  the model on the training posts only.</p>
+  0.52 across all posts). Section 3 refits the model on training posts only.</p>
 
 <h3>Why this grouping</h3>
 <p class="muted">Seven ways to group the 2,192 posts by account. &ldquo;Variance removed&rdquo; is how much
@@ -201,48 +204,45 @@
   keeping groups large. F leaves too few posts per group once a test set is split off, and G uses
   likes per video, which partly includes the post&rsquo;s own likes.</p>
 
-<h3>Columns kept</h3>
-<div class="card scroll">
-  <table>
-  <thead>
-  <tr><th scope="col">Kind</th><th scope="col">Columns</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>Label</td><td class="wrap-cell"><code>popularity</code></td></tr>
-    <tr><td>Group</td><td class="wrap-cell"><code>user_group</code> (1&ndash;5), <code>expected_popularity</code></td></tr>
-    <tr><td>Post</td><td class="wrap-cell"><code>post_content</code>, <code>post_suggested_words</code>, <code>post_time</code></td></tr>
-    <tr><td>Video</td><td class="wrap-cell"><code>video_duration</code>, <code>video_height</code>, <code>video_width</code>,
-      <code>video_ratio</code>, <code>video_format</code>, <code>music_title</code>, <code>music_duration</code>,
-      <code>video_path</code></td></tr>
-    <tr><td>IDs</td><td class="wrap-cell"><code>pid</code>, <code>vid</code>, <code>uid</code>
-      (<code>uid</code> kept only so a split can keep each user&rsquo;s posts together)</td></tr>
-  </tbody>
-</table>
-</div>
+<h3>Model input</h3>
+<p>Every model reads one text block per post, <code>model_text</code> (median about 700 tokens):</p>
+<pre>Caption: Mission Give everyone glass skin clearskin skintips
+Posted: Sunday, 2022-10-09 14:45 UTC
+Music: original sound
+Video length: 7 seconds
+Orientation: vertical
+Resolution: 540p
+Video:
+  Summary / Content type / Topic / Format / Hook / People / Setting /
+  Filming / Editing / Audio / Tone / Call to action / Products or brands
+  Timeline: one line per scene, with its audio
+  Transcript: timed spoken lines
+  On-screen text: timed texts</pre>
+<p class="muted">Never shown to a model: ids, <code>popularity</code>, the label, and the account
+  group. Left out on purpose: <code>post_suggested_words</code> (search suggestions added by the
+  platform; they track popularity within every account group, so possibly a leak).</p>
 
 <h2>3 &nbsp;Split</h2>
 
 <div class="grid">
-  <div class="stat"><b>1,749 / 443</b><span>train / test posts (about 80 / 20)</span></div>
+  <div class="stat"><b>1,731 / 436</b><span>train / test posts</span></div>
+  <div class="stat"><b>353 / 84</b><span>train / test YES</span></div>
   <div class="stat"><b>0</b><span>users on both sides</span></div>
-  <div class="stat"><b>Top 20%</b><span>label, within each group</span></div>
-  <div class="stat"><b>5</b><span>folders, one per group</span></div>
+  <div class="stat"><b>Top 20%</b><span>within each user group = YES</span></div>
 </div>
 
 <p class="muted" style="margin-top:14px">Built by <code>smp/pipeline/prepare_data.py</code> into
-  <code>smp/data/split/group_1</code> &hellip; <code>group_5</code>, each with
-  <code>train.parquet</code> and <code>test.parquet</code>.</p>
+  <code>smp/data/split/train.parquet</code> and <code>test.parquet</code>.</p>
 
-<h3>Steps</h3>
 <ol>
-  <li><b>Split by user:</b> all of a user&rsquo;s posts go to one side. The split is stratified by
-    follower quintile, so every account tier appears in both train and test.</li>
-  <li><b>Refit the groups on train only:</b> the group model is fitted on the 1,749 training posts
-    (intercept 3.93, followers +1.62,
-    videos -1.23, following -0.12), and its
-    group edges come from training posts. Test posts get the same model and edges.</li>
-  <li><b>Label inside each group:</b> YES = the top 20% of popularity among the group&rsquo;s
-    training posts. The same cutoff is applied to the group&rsquo;s test posts.</li>
+  <li><b>Split by user, 80/20:</b> all of a user&rsquo;s posts go to one side, stratified by follower
+    quintile.</li>
+  <li><b>Refit the groups on train only</b> (intercept 3.73, followers
+    +1.62, videos -1.24, following
+    -0.04); test posts get the same model and edges.</li>
+  <li><b>Label:</b> YES = popularity in the top 20% of the post&rsquo;s own group, with the cutoff taken
+    from that group&rsquo;s training posts. The groups only set the cutoff; one pooled model is
+    trained and tested on all groups.</li>
 </ol>
 
 <div class="card scroll">
@@ -252,18 +252,19 @@
       <th scope="col">Test posts</th><th scope="col">Test YES</th><th scope="col">Popularity cutoff</th></tr>
   </thead>
   <tbody>
-    <tr><td>1</td><td class="n">350</td><td class="n">70</td><td class="n">83</td><td class="n">21</td><td class="n">7.42</td></tr>
-    <tr><td>2</td><td class="n">350</td><td class="n">70</td><td class="n">87</td><td class="n">19</td><td class="n">9.95</td></tr>
-    <tr><td>3</td><td class="n">349</td><td class="n">70</td><td class="n">73</td><td class="n">13</td><td class="n">10.66</td></tr>
-    <tr><td>4</td><td class="n">350</td><td class="n">70</td><td class="n">103</td><td class="n">21</td><td class="n">11.21</td></tr>
-    <tr><td>5</td><td class="n">350</td><td class="n">70</td><td class="n">97</td><td class="n">22</td><td class="n">11.74</td></tr>
+    <tr><td>1</td><td class="n">346</td><td class="n">70</td><td class="n">94</td><td class="n">14</td><td class="n">7.65</td></tr>
+    <tr><td>2</td><td class="n">346</td><td class="n">70</td><td class="n">90</td><td class="n">14</td><td class="n">10.07</td></tr>
+    <tr><td>3</td><td class="n">346</td><td class="n">70</td><td class="n">87</td><td class="n">19</td><td class="n">10.64</td></tr>
+    <tr><td>4</td><td class="n">346</td><td class="n">73</td><td class="n">83</td><td class="n">22</td><td class="n">11.16</td></tr>
+    <tr><td>5</td><td class="n">347</td><td class="n">70</td><td class="n">82</td><td class="n">15</td><td class="n">11.79</td></tr>
   </tbody>
 </table>
 </div>
 
-<p class="muted">Test groups vary in size because their edges come from training posts. Group 3&rsquo;s
-  test set has only 13 positives, so its results will be the noisiest. 48 posts fall in a different
-  group here than in section 2, because of the train-only refit.</p>
+<p class="muted">Why pooled: five separate groups would give test sets of about 86 posts and 17
+  positives each (AUC uncertain by about &plusmn;0.15). Pooled, the test set has 436 posts and
+  84 positives (about &plusmn;0.07), and the label still controls for account size. Results per
+  group are possible but rough.</p>
 
 <footer>
   Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a>
