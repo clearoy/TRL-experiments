@@ -1,7 +1,7 @@
-"""Split the clean SMP posts by user, then label the top 20% inside each user group.
+"""Split the ready SMP posts by user, then label the top 20% inside each user group.
 
-Reads data/clean/metadata.parquet (written by extract_clean.py) and writes one
-folder per account group:
+Reads data/clean/ready_data.parquet (written by make_ready.py) and writes one
+folder per account group, keeping every column of ready_data plus `label`:
 
     smp/data/split/group_1/{train,test}.parquet   ... group_5/
     smp/data/split_meta.json                      (tracked: how the split was made)
@@ -37,7 +37,7 @@ from sklearn.model_selection import StratifiedGroupKFold
 
 HERE = Path(__file__).resolve().parents[1]  # smp/
 DATA_DIR = HERE / "data"
-CLEAN = DATA_DIR / "clean" / "metadata.parquet"
+CLEAN = DATA_DIR / "clean" / "ready_data.parquet"
 USERS = DATA_DIR / "raw" / "train" / "SMP-Video_anonymized_users_train.jsonl"
 OUT = DATA_DIR / "split"
 
@@ -47,7 +47,7 @@ N_GROUPS = 5
 
 def build(top_frac: float, n_folds: int, seed: int) -> None:
     if not CLEAN.exists():
-        raise SystemExit(f"Missing {CLEAN}. Run pipeline/extract_clean.py first.")
+        raise SystemExit(f"Missing {CLEAN}. Run pipeline/make_ready.py first.")
     df = pd.read_parquet(CLEAN).drop(columns=["expected_popularity", "user_group"])
     users = pd.read_json(USERS, lines=True)[["uid", *GROUP_INPUTS]]
     df = df.merge(users, on="uid", how="left", validate="m:1")
@@ -71,7 +71,7 @@ def build(top_frac: float, n_folds: int, seed: int) -> None:
     df["user_group"] = np.searchsorted(inner, df.expected_popularity, side="right") + 1
 
     meta = {
-        "source": "data/clean/metadata.parquet",
+        "source": "data/clean/ready_data.parquet",
         "split": f"by user (StratifiedGroupKFold, {n_folds} folds, fold 0 = test), "
         "stratified by follower quintile",
         "seed": seed,
