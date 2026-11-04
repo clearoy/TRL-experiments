@@ -5,16 +5,16 @@ Steps, all on the same footing as the training posts:
   2. Describe it with Gemini, using the same prompt as the dataset
      (pipeline/describe_videos.py), and build the same `model_text` block
      (pipeline/make_ready.py).
-  3. Place the account in its size group from followers, following and videos
-     posted (the group model fitted on the dataset).
-  4. Ask Jev the checklist's questions about the post.
-  5. Return the checklist: for each rule, the answer, whether it matches posts
-     that did better or worse for accounts of this size, and how strong that
-     pattern was in the data; plus an overall estimate, kept secondary.
+  3. Ask Jev the checklist's questions about the post.
+  4. Return the checklist: for each rule, the answer, whether it matches posts
+     that did better or worse than posts from similar-size accounts, and how
+     strong that pattern was in the data; plus an overall estimate, kept secondary.
+
+Content only: nothing about the account is used. Account size only defined the
+training label (top 20% within an account-size group).
 
 Run on the command line:
-    python smp/analyzer/analyze.py video.mp4 --caption "..." --followers 84000 \
-        --following 300 --videos 450
+    python smp/analyzer/analyze.py video.mp4 --caption "..." --music "original sound"
 """
 
 from __future__ import annotations
@@ -146,15 +146,6 @@ async def describe(path: Path) -> dict:
 
 # ----------------------------------------------------------------- scoring
 
-def account_group(model: dict, followers: int, following: int, videos: int) -> tuple[int, float]:
-    gm = model["group_model"]
-    x = {"user_follower_count": followers, "user_following_count": following, "user_video_count": videos}
-    expected = gm["intercept"] + sum(gm["coef"][k] * math.log10(max(x[k], 1)) for k in gm["coef"])
-    inner = model["group_edges"][1:-1]
-    group = 1 + sum(expected >= e for e in inner)
-    return int(group), float(expected)
-
-
 async def ask_jev(model: dict, model_text: str) -> dict:
     qs = {r["id"]: NoulQuestion(instructions=r["question"]) for r in model["rules"]}
     release = model["created_with"].get("jev_release") or "jev-latest"
@@ -190,8 +181,7 @@ def checklist(model: dict, answers: dict) -> dict:
     return {"items": items, "probability": prob}
 
 
-async def analyze(video: Path, caption: str, followers: int, following: int, videos: int,
-                  music: str = "", posted_at: datetime | None = None,
+async def analyze(video: Path, caption: str = "", music: str = "", posted_at: datetime | None = None,
                   progress: Callable[[str], None] = lambda s: None) -> dict:
     model = json.loads(MODEL_PATH.read_text())
     posted_at = posted_at or datetime.now(timezone.utc)
@@ -212,16 +202,12 @@ async def analyze(video: Path, caption: str, followers: int, following: int, vid
     }
     text = mr.model_text(row, rec)
 
-    progress("Placing the account in its size group")
-    group, expected = account_group(model, followers, following, videos)
     progress("Asking Jev the checklist questions")
     jev = await ask_jev(model, text)
     progress("Building the checklist")
     cl = checklist(model, jev["answers"])
     return {
         "video": {**row, "width": facts["width"], "height": facts["height"]},
-        "account": {"followers": followers, "following": following, "videos": videos,
-                    "group": group, "expected_popularity": expected},
         "probability": cl["probability"], "base_rate": model["base_rate"],
         "checklist": cl["items"],
         "description": {k: v for k, v in rec.items() if not k.startswith("_")},
@@ -235,18 +221,14 @@ def main() -> None:
     p.add_argument("video", type=Path)
     p.add_argument("--caption", default="")
     p.add_argument("--music", default="")
-    p.add_argument("--followers", type=int, required=True)
-    p.add_argument("--following", type=int, required=True)
-    p.add_argument("--videos", type=int, required=True, help="Videos the account has posted.")
     p.add_argument("--json", action="store_true", help="Print the full JSON result.")
     a = p.parse_args()
-    res = asyncio.run(analyze(a.video, a.caption, a.followers, a.following, a.videos, a.music,
+    res = asyncio.run(analyze(a.video, a.caption, a.music,
                               progress=lambda s: print(f"... {s}", file=sys.stderr)))
     if a.json:
         print(json.dumps(res, indent=2, default=str))
         return
-    print(f"\nAccount group {res['account']['group']} of 5 | estimate {res['probability']:.0%} "
-          f"(typical {res['base_rate']:.0%})\n")
+    print(f"\nEstimate {res['probability']:.0%} (typical {res['base_rate']:.0%})\n")
     labels = {"match_hit": "✓ matches hits", "missing_hit": "· missing", "match_weak": "✗ matches weaker posts",
               "avoids_weak": "✓ avoids", "unanswered": "? unanswered"}
     for it in res["checklist"]:

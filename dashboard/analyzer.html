@@ -85,18 +85,6 @@ details.raw pre{white-space:pre-wrap;max-height:420px;overflow:auto}
       <textarea id="caption" placeholder="The post's caption, with hashtags"></textarea>
     </div>
     <div class="field">
-      <label for="followers">Followers</label>
-      <input type="number" id="followers" min="0" step="1" required>
-    </div>
-    <div class="field">
-      <label for="following">Following</label>
-      <input type="number" id="following" min="0" step="1" required>
-    </div>
-    <div class="field">
-      <label for="videos">Videos posted</label>
-      <input type="number" id="videos" min="0" step="1" required>
-    </div>
-    <div class="field">
       <label for="music">Music or sound</label>
       <input type="text" id="music" placeholder="original sound">
     </div>
@@ -111,8 +99,9 @@ details.raw pre{white-space:pre-wrap;max-height:420px;overflow:auto}
     <div class="progress hidden" id="progress"><span class="spinner"></span><span id="step"></span></div>
     <div class="error hidden" id="err"></div>
   </div>
-  <p class="muted" style="margin:14px 0 0;font-size:13px">The account numbers only set which size group the video is compared
-    with; they are not part of the checklist. One analysis takes about a minute.</p>
+  <p class="muted" style="margin:14px 0 0;font-size:13px">Content only: the analyzer reads the video, caption, music and post time,
+    nothing about the account. The rules were learned by comparing each post with posts from accounts of a similar size, so
+    they describe content that did better than its account size would suggest. One analysis takes about a minute.</p>
 </form>
 
 <div id="result" class="hidden">
@@ -154,7 +143,7 @@ const ORDER = ['match_hit', 'avoids_weak', 'match_weak', 'missing_hit', 'unanswe
 function ruleLine(r) {
   const parts = [];
   if (r.hit_rate_yes != null && r.hit_rate_no != null)
-    parts.push(`top-20% rate for similar-size accounts: ${pct(r.hit_rate_yes)} with this, ${pct(r.hit_rate_no)} without`);
+    parts.push(`top 20% for their account size: ${pct(r.hit_rate_yes)} of posts with this, ${pct(r.hit_rate_no)} without`);
   parts.push(`chosen in ${r.fold_support} of ${NFOLDS} folds`);
   return parts.join(' · ');
 }
@@ -208,9 +197,8 @@ async function checkServer() {
 }
 
 function render(res) {
-  const a = res.account, v = res.video;
+  const v = res.video;
   $('facts').innerHTML = `
-    <div class="stat"><b>Group ${a.group} of 5</b><span>account size (1 = smallest)</span></div>
     <div class="stat"><b>${v.video_duration_seconds}s</b><span>${esc(v.video_orientation)}, ${esc(v.video_resolution)}</span></div>
     <div class="stat"><b class="txt">${esc(res.description.content_type)}</b><span>content type (Gemini)</span></div>`;
   let html = '';
@@ -227,8 +215,8 @@ function render(res) {
     }
   }
   $('groups').innerHTML = html;
-  $('estimate').innerHTML = `Overall estimate, for reference: <b>${pct(res.probability)}</b> chance of being in the top 20% for accounts of
-    this size (typical: ${pct(res.base_rate)}). The estimate is rough; the checklist above is the main output.`;
+  $('estimate').innerHTML = `Overall estimate, for reference: <b>${pct(res.probability)}</b> chance of being in the top 20% of posts from
+    accounts of a similar size (typical: ${pct(res.base_rate)}), judged on content alone. The estimate is rough; the checklist above is the main output.`;
   $('raw').textContent = res.model_text;
   $('result').classList.remove('hidden');
   $('result').scrollIntoView({behavior: 'smooth'});
@@ -242,8 +230,7 @@ $('form').addEventListener('submit', async ev => {
   $('go').disabled = true;
   $('progress').classList.remove('hidden');
   $('step').textContent = 'Uploading';
-  const q = new URLSearchParams({caption: $('caption').value, music: $('music').value,
-    followers: $('followers').value, following: $('following').value, videos: $('videos').value});
+  const q = new URLSearchParams({caption: $('caption').value, music: $('music').value});
   if ($('posted').value) q.set('posted_at', $('posted').value);
   const t0 = Date.now();
   try {

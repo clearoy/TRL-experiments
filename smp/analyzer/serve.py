@@ -3,7 +3,7 @@
 Serves the dashboard folder and a small API the analyzer page calls:
 
     GET  /api/health              {"ok": true}
-    POST /api/analyze?caption=&music=&followers=&following=&videos=&posted_at=
+    POST /api/analyze?caption=&music=&posted_at=
                                   body: the raw .mp4 bytes -> {"job": "<id>"}
     GET  /api/jobs/<id>           {"status": queued|running|done|error, "step", "result"|"error"}
 
@@ -102,17 +102,11 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(404, {"error": "not found"})
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         try:
-            params = {
-                "caption": q.get("caption", ""),
-                "music": q.get("music", ""),
-                "followers": int(q["followers"]),
-                "following": int(q["following"]),
-                "videos": int(q["videos"]),
-            }
+            params = {"caption": q.get("caption", ""), "music": q.get("music", "")}
             if q.get("posted_at"):
                 params["posted_at"] = datetime.fromisoformat(q["posted_at"]).replace(tzinfo=timezone.utc)
-        except (KeyError, ValueError):
-            return self._json(400, {"error": "followers, following and videos must be whole numbers"})
+        except ValueError:
+            return self._json(400, {"error": "posted_at must be a date and time like 2026-11-04T18:30"})
         n = int(self.headers.get("Content-Length", 0))
         if not n:
             return self._json(400, {"error": "no video in the request"})
