@@ -26,6 +26,14 @@ smp/
 ├── run_rrf.py             RRF (Random Rule Forest) on the split: gpt-6.1-sol writes YES/NO
 │                          questions, Jev answers them, elastic-net combines
 ├── combine.py             adds a run's policy scores to the TF-IDF models (no LLM calls)
+├── checklist/
+│   └── build.py           the content checklist: candidate questions per CV fold, Jev answers,
+│                          stability selection of a few rules, final fit on all posts
+├── analyzer/
+│   ├── analyze.py         one video -> Gemini description -> account group -> Jev answers
+│   │                      -> checklist (also a command-line tool)
+│   ├── serve.py           local server for the dashboard's Video analyzer page
+│   └── model.json         the fitted checklist the analyzer loads (written by checklist/build.py)
 ├── research/
 │   └── video_extraction/  the prompt study that chose design V4 (prompts.py, run.py)
 ├── legacy/                the earlier random-split experiment (1,500 posts, top 10%).
@@ -52,6 +60,8 @@ python smp/baselines.py
 python smp/run_policy_induction.py --outdir run01
 python smp/combine.py --run run01
 python smp/run_rrf.py --outdir rrf01
+python smp/checklist/build.py          # the checklist and smp/analyzer/model.json
+python smp/analyzer/serve.py           # then open http://localhost:8777/analyzer.html
 ```
 
 Use the library's interpreter (`../think-reason-learn/.venv/bin/python`); see the

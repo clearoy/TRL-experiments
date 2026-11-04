@@ -1,0 +1,141 @@
+{
+  "created_with": {
+    "generator": "gemini-3.1-pro-preview / gemini-3.5-flash",
+    "answerer": "jev",
+    "jev_release": "typesafe/jev-1.14-20261014",
+    "description_model": "gemini-3.5-flash",
+    "description_prompt_version": "8d3a7a981f0c"
+  },
+  "label": "top 20% of popularity within the post's account-size group",
+  "base_rate": 0.20166128287955698,
+  "group_model": {
+    "intercept": 3.8652848137945757,
+    "coef": {
+      "user_follower_count": 1.6372750066323905,
+      "user_following_count": -0.10836141809024681,
+      "user_video_count": -1.259684151789822
+    }
+  },
+  "group_edges": [
+    3.7520349810349227,
+    6.794895729672944,
+    7.868204397074946,
+    8.758351620596214,
+    9.70654486813123,
+    13.91283591627592
+  ],
+  "group_cutoffs": {
+    "1": 7.464,
+    "2": 9.936,
+    "3": 10.64,
+    "4": 11.218,
+    "5": 11.79
+  },
+  "intercept": -1.438668683362092,
+  "rules": [
+    {
+      "id": "r04",
+      "question": "Is the video shot entirely from a first-person perspective, top-down angle, or off-camera viewpoint where the creator's face is never visible to the audience?",
+      "weight": 0.25728862232322175,
+      "direction": "helps",
+      "share_yes": 0.45085371481310565,
+      "hit_rate_yes": 0.2599795291709314,
+      "hit_rate_no": 0.15378151260504203,
+      "selection_freq": 0.57,
+      "fold_support": 1,
+      "mean": 0.42141209044762346,
+      "sd": 0.4110540441590836
+    },
+    {
+      "id": "r03",
+      "question": "Does the video feature close-up footage of hands interacting with food, materials, or objects accompanied by tactile ASMR sound effects (such as scraping, crunching, tapping, or pouring)?",
+      "weight": 0.18650669572127612,
+      "direction": "helps",
+      "share_yes": 0.09229349330872173,
+      "hit_rate_yes": 0.335,
+      "hit_rate_no": 0.18810371123538383,
+      "selection_freq": 0.66,
+      "fold_support": 0,
+      "mean": 0.13626211352099676,
+      "sd": 0.23403970663026225
+    },
+    {
+      "id": "r01",
+      "question": "Does the video include a spoken voiceover narration where the creator explicitly lists ingredients, measurements, or step-by-step instructions for preparing a meal or recipe?",
+      "weight": 0.175869089961842,
+      "direction": "helps",
+      "share_yes": 0.04522381172127365,
+      "hit_rate_yes": 0.41836734693877553,
+      "hit_rate_no": 0.19139681005316578,
+      "selection_freq": 0.75,
+      "fold_support": 1,
+      "mean": 0.05713428703276419,
+      "sd": 0.19020609707978656
+    },
+    {
+      "id": "r02",
+      "question": "Does the video entirely avoid showing a person's face clearly on camera, focusing instead on hands, physical objects, environments, or scenery for the full duration of the clip?",
+      "weight": 0.0992393718554201,
+      "direction": "helps",
+      "share_yes": 0.39640055376095984,
+      "hit_rate_yes": 0.2689173457508731,
+      "hit_rate_no": 0.15749235474006115,
+      "selection_freq": 0.68,
+      "fold_support": 1,
+      "mean": 0.40408398707891086,
+      "sd": 0.42813024262123384
+    }
+  ],
+  "evaluation": {
+    "folds": {
+      "auc_checklist": [
+        0.6093704338662863,
+        0.01745586483501249
+      ],
+      "auc_all_questions_l1": [
+        0.6045019725697642,
+        0.028209066391274684
+      ],
+      "auc_tfidf": [
+        0.6593854634114932,
+        0.029332069056039356
+      ],
+      "n_rules": [
+        5.0,
+        0.0
+      ],
+      "oof_auc_checklist": 0.6073835993042809,
+      "n_folds": 2
+    },
+    "time_split": null,
+    "calibration": [
+      {
+        "pred": 0.1082660142934737,
+        "obs": 0.13636363636363635,
+        "n": 176
+      },
+      {
+        "pred": 0.15090953892473963,
+        "obs": 0.14857142857142858,
+        "n": 175
+      },
+      {
+        "pred": 0.17962466061236324,
+        "obs": 0.2057142857142857,
+        "n": 175
+      },
+      {
+        "pred": 0.23376781781689365,
+        "obs": 0.2571428571428571,
+        "n": 175
+      },
+      {
+        "pred": 0.33411897035602767,
+        "obs": 0.2742857142857143,
+        "n": 175
+      }
+    ]
+  },
+  "n_posts": 2167,
+  "n_candidates": 94
+}
