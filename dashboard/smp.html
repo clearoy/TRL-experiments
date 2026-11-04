@@ -34,6 +34,7 @@
   <a href="compas.html">COMPAS</a>
   <a href="cmv.html">ChangeMyView</a>
   <a href="smp.html" aria-current="page">SMP Challenge</a>
+  <a href="analyzer.html">Video analyzer</a>
 </nav>
 
 <header>
@@ -341,6 +342,32 @@ Video:
   synchronised handling sounds, exact quantities); PolicyInduction&rsquo;s policies are broad quality
   judgements. Weights come from regressions over overlapping features, so individual signs should not be
   read as findings.</p>
+
+<h2>5 &nbsp;Video analyzer (MVP)</h2>
+
+<p>The findings are turned into an internal tool: upload a video with its caption and account numbers, and get a
+  short checklist of content patterns that top posts for accounts of that size shared. <a href="analyzer.html">Open the
+  Video analyzer</a>.</p>
+
+<div class="grid">
+  <div class="stat"><b>4</b><span>rules in the checklist</span></div>
+  <div class="stat"><b>0.609</b><span>checklist ROC-AUC, 2-fold cross-validation</span></div>
+  <div class="stat"><b>0.659</b><span>TF-IDF on the same folds</span></div>
+  <div class="stat"><b>94</b><span>candidate questions</span></div>
+</div>
+
+<p class="muted" style="margin-top:14px">How it was built: candidate YES/NO questions were written per cross-validation fold
+  (grouped by user) from that fold&rsquo;s training posts only, Jev answered every question for every post, and stability
+  selection kept the questions picked most reliably. A short list scored as well as a long one (1&ndash;4 rules about 0.62,
+  12 rules 0.59), so the checklist keeps at most 5.</p>
+
+<ul>
+<li>Is the video shot entirely from a first-person perspective, top-down angle, or off-camera viewpoint where the creator&#x27;s face is never visible to the audience? <span class="muted">(top 20%: 26% with, 15% without)</span></li><li>Does the video feature close-up footage of hands interacting with food, materials, or objects accompanied by tactile ASMR sound effects (such as scraping, crunching, tapping, or pouring)? <span class="muted">(top 20%: 34% with, 19% without)</span></li><li>Does the video include a spoken voiceover narration where the creator explicitly lists ingredients, measurements, or step-by-step instructions for preparing a meal or recipe? <span class="muted">(top 20%: 42% with, 19% without)</span></li><li>Does the video entirely avoid showing a person&#x27;s face clearly on camera, focusing instead on hands, physical objects, environments, or scenery for the full duration of the clip? <span class="muted">(top 20%: 27% with, 16% without)</span></li>
+</ul>
+
+<p class="muted">Questions were written by Gemini (the OpenAI account ran out of credits) and only 2 of the planned 5 folds
+  finished before the Gemini free-tier quota ran out; re-running <code>smp/checklist/build.py</code> later fills in the other
+  folds and the time check. Uploading needs the local server: <code>python smp/analyzer/serve.py</code>.</p>
 
 <footer>
   Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a>

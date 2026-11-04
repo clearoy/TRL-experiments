@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMP Video Analyzer</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 16px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.field.wide{grid-column:1/-1}
+.field label{font-weight:600}
+.field .hint{color:var(--muted);font-size:12px}
+.field input,.field textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+.field textarea{min-height:64px;resize:vertical}
+.field input[type=file]{padding:7px 8px}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px}
+button.primary{font:inherit;font-weight:600;font-size:14px;color:#fff;background:var(--accent);border:0;
+  border-radius:6px;padding:10px 18px;cursor:pointer}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.notice{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--accent-soft);
+  border-radius:6px;padding:12px 14px;font-size:14px;margin-bottom:16px}
+.notice code{background:var(--panel)}
+.progress{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--muted)}
+.spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;
+  animation:spin .9s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+.error{color:#b42318;font-size:14px}
+@media (prefers-color-scheme:dark){.error{color:#f97066}}
+.group-title{display:flex;align-items:baseline;gap:10px;margin:22px 0 8px}
+.group-title h3{margin:0}
+.count{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:8px;
+  display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start}
+.badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;flex:none}
+.b-good{background:#e3f4ea;color:#1f7a45}.b-bad{background:#fde7e4;color:#b42318}.b-miss{background:var(--accent-soft);color:var(--muted)}
+@media (prefers-color-scheme:dark){.b-good{background:#173826;color:#6fd59a}.b-bad{background:#3d1a17;color:#f97066}}
+.item .q{font-size:14px;line-height:1.45}
+.item .why{font-size:12px;color:var(--muted);margin-top:4px}
+.item .ans{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat b.txt{font-family:inherit;font-size:17px;letter-spacing:0;line-height:1.3}
+.estimate{font-size:13px;color:var(--muted);margin-top:10px}
+details.raw summary{cursor:pointer;color:var(--muted);font-size:13px}
+details.raw pre{white-space:pre-wrap;max-height:420px;overflow:auto}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+  <a class="home" href="index.html">TRL benchmarks</a>
+  <a href="compas.html">COMPAS</a>
+  <a href="cmv.html">ChangeMyView</a>
+  <a href="smp.html">SMP Challenge</a>
+  <a href="analyzer.html" aria-current="page">Video analyzer</a>
+</nav>
+
+<header>
+  <h1>SMP video analyzer</h1>
+  <div class="sub" id="subtitle">Checks a video against content rules learned from short-form videos · internal tool</div>
+</header>
+
+<h2>1 &nbsp;Analyze a video</h2>
+
+<div class="notice hidden" id="offline">
+  Uploading needs the local analyzer server, which calls Gemini and Jev with the keys in the library
+  repo&rsquo;s <code>.env</code>. Start it from the experiments folder with
+  <code>python smp/analyzer/serve.py</code> and open <code>http://localhost:8777/analyzer.html</code>.
+  The checklist and its evaluation below are shown either way.
+</div>
+
+<form class="card" id="form">
+  <div class="form-grid">
+    <div class="field wide">
+      <label for="video">Video file (.mp4)</label>
+      <input type="file" id="video" accept="video/mp4,.mp4" required>
+    </div>
+    <div class="field wide">
+      <label for="caption">Caption</label>
+      <textarea id="caption" placeholder="The post's caption, with hashtags"></textarea>
+    </div>
+    <div class="field">
+      <label for="followers">Followers</label>
+      <input type="number" id="followers" min="0" step="1" required>
+    </div>
+    <div class="field">
+      <label for="following">Following</label>
+      <input type="number" id="following" min="0" step="1" required>
+    </div>
+    <div class="field">
+      <label for="videos">Videos posted</label>
+      <input type="number" id="videos" min="0" step="1" required>
+    </div>
+    <div class="field">
+      <label for="music">Music or sound</label>
+      <input type="text" id="music" placeholder="original sound">
+    </div>
+    <div class="field">
+      <label for="posted">Post time (UTC)</label>
+      <input type="datetime-local" id="posted">
+      <span class="hint">Leave empty for now</span>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="primary" type="submit" id="go">Analyze</button>
+    <div class="progress hidden" id="progress"><span class="spinner"></span><span id="step"></span></div>
+    <div class="error hidden" id="err"></div>
+  </div>
+  <p class="muted" style="margin:14px 0 0;font-size:13px">The account numbers only set which size group the video is compared
+    with; they are not part of the checklist. One analysis takes about a minute.</p>
+</form>
+
+<div id="result" class="hidden">
+  <h2>2 &nbsp;Checklist for this video</h2>
+  <div class="summary-row" id="facts"></div>
+  <div id="groups"></div>
+  <p class="estimate" id="estimate"></p>
+  <details class="raw card"><summary>What the model read (Gemini&rsquo;s description of the video)</summary><pre id="raw"></pre></details>
+</div>
+
+<h2 id="rules-h">The checklist</h2>
+<p class="muted" id="rules-intro"></p>
+<div class="card scroll"><table id="rules"></table></div>
+
+<h2>How reliable it is</h2>
+<div id="reliab"></div>
+
+<footer>
+  Data: <a href="https://huggingface.co/datasets/smpchallenge/SMP-Video">smpchallenge/SMP-Video</a> (research use)
+  &nbsp;|&nbsp; Built by <code>smp/checklist/build.py</code>; analyzer in <code>smp/analyzer/</code>
+</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pct = x => x == null ? '–' : Math.round(100 * x) + '%';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let MODEL = null, NFOLDS = 5;
+
+const STATUS = {
+  match_hit:   {title: 'Matches what top posts did', badge: '✓', cls: 'b-good'},
+  avoids_weak: {title: 'Avoids what weaker posts did', badge: '✓', cls: 'b-good'},
+  match_weak:  {title: 'Matches what weaker posts did', badge: '✗', cls: 'b-bad'},
+  missing_hit: {title: 'Missing compared with top posts', badge: '·', cls: 'b-miss'},
+  unanswered:  {title: 'Could not be answered', badge: '?', cls: 'b-miss'},
+};
+const ORDER = ['match_hit', 'avoids_weak', 'match_weak', 'missing_hit', 'unanswered'];
+
+function ruleLine(r) {
+  const parts = [];
+  if (r.hit_rate_yes != null && r.hit_rate_no != null)
+    parts.push(`top-20% rate for similar-size accounts: ${pct(r.hit_rate_yes)} with this, ${pct(r.hit_rate_no)} without`);
+  parts.push(`chosen in ${r.fold_support} of ${NFOLDS} folds`);
+  return parts.join(' · ');
+}
+
+async function loadModel() {
+  MODEL = await (await fetch('smp_checklist.json', {cache: 'no-store'})).json();
+  const n = MODEL.rules.length, ev = MODEL.evaluation.folds;
+  NFOLDS = ev.n_folds || 5;
+  $('subtitle').textContent = `Checks a video against ${n} content rules learned from ${MODEL.n_posts.toLocaleString()} US English short videos · internal tool`;
+  $('rules-intro').innerHTML = `The ${n} questions the analyzer asks, chosen from ${MODEL.n_candidates} candidates written by
+    <code>${esc(MODEL.created_with.generator)}</code> and answered by Jev. &ldquo;Helps&rdquo; means posts with it were more often in
+    the top 20% of their account-size group (base rate ${pct(MODEL.base_rate)}). Rates are from all posts; fold support counts how many of
+    the ${NFOLDS} cross-validation folds picked a similar rule with the same direction.`;
+  let t = '<thead><tr><th scope="col">#</th><th scope="col">Question</th><th scope="col">Direction</th><th scope="col">Top-20% rate with</th><th scope="col">without</th><th scope="col">Share of posts</th><th scope="col">Folds</th></tr></thead><tbody>';
+  MODEL.rules.forEach((r, i) => {
+    t += `<tr><td class="n">${i + 1}</td><td class="wrap-cell">${esc(r.question)}</td><td>${r.direction}</td>
+      <td class="n">${pct(r.hit_rate_yes)}</td><td class="n">${pct(r.hit_rate_no)}</td><td class="n">${pct(r.share_yes)}</td><td class="n">${r.fold_support}/${NFOLDS}</td></tr>`;
+  });
+  $('rules').innerHTML = t + '</tbody>';
+
+  const ts = MODEL.evaluation.time_split, cal = MODEL.evaluation.calibration;
+  const timeTile = ts ? `<div class="stat"><b>${ts.auc_checklist.toFixed(3)}</b><span>checklist on the latest 20% of posts (time check)</span></div>`
+                      : `<div class="stat"><b>&ndash;</b><span>time check not run yet</span></div>`;
+  $('reliab').innerHTML = `
+    <div class="grid">
+      <div class="stat"><b>${ev.auc_checklist[0].toFixed(3)}</b><span>checklist ROC-AUC, mean of ${NFOLDS} folds (&plusmn; ${ev.auc_checklist[1].toFixed(3)})</span></div>
+      <div class="stat"><b>${ev.auc_tfidf[0].toFixed(3)}</b><span>TF-IDF word model on the same folds (not interpretable)</span></div>
+      ${timeTile}
+      <div class="stat"><b>${n}</b><span>rules in the final checklist</span></div>
+    </div>
+    <p class="muted" style="margin-top:14px">ROC-AUC: 0.5 is chance, 1.0 is perfect. Each fold picks its rules from questions written using
+      only its own training posts, then is scored on posts it never saw. Using every candidate question instead of a short list scores
+      ${ev.auc_all_questions_l1[0].toFixed(3)}; on the folds, 1 to 4 rules scored as well as any longer list.</p>
+    <h3>Calibration of the overall estimate</h3>
+    <div class="card scroll"><table><thead><tr><th scope="col">Posts grouped by estimate</th><th scope="col">Average estimate</th>
+      <th scope="col">Actually in the top 20%</th><th scope="col">Posts</th></tr></thead><tbody>
+      ${cal.map((c, i) => `<tr><td>Fifth ${i + 1}</td><td class="n">${pct(c.pred)}</td><td class="n">${pct(c.obs)}</td><td class="n">${c.n}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="muted">Read the checklist as patterns, not guarantees: they are associations in 2,167 US English posts from 2022&ndash;23,
+      described by Gemini and judged by Jev, and adding a pattern to a video does not by itself make it perform better.</p>`;
+}
+
+async function checkServer() {
+  try {
+    const r = await fetch('/api/health', {cache: 'no-store'});
+    if (r.ok && (await r.json()).ok) return true;
+  } catch (e) {}
+  $('offline').classList.remove('hidden');
+  $('go').disabled = true;
+  return false;
+}
+
+function render(res) {
+  const a = res.account, v = res.video;
+  $('facts').innerHTML = `
+    <div class="stat"><b>Group ${a.group} of 5</b><span>account size (1 = smallest)</span></div>
+    <div class="stat"><b>${v.video_duration_seconds}s</b><span>${esc(v.video_orientation)}, ${esc(v.video_resolution)}</span></div>
+    <div class="stat"><b class="txt">${esc(res.description.content_type)}</b><span>content type (Gemini)</span></div>`;
+  let html = '';
+  for (const s of ORDER) {
+    const items = res.checklist.filter(i => i.status === s);
+    if (!items.length) continue;
+    const m = STATUS[s];
+    html += `<div class="group-title"><h3>${m.title}</h3><span class="count">${items.length}</span></div>`;
+    for (const it of items) {
+      const ans = it.answer == null ? '' : `Jev: ${it.present ? 'YES' : 'NO'} (${it.answer.toFixed(2)})`;
+      html += `<div class="item"><span class="badge ${m.cls}">${m.badge}</span>
+        <div><div class="q">${esc(it.question)}</div><div class="why">${ruleLine(it)}</div></div>
+        <div class="ans">${ans}</div></div>`;
+    }
+  }
+  $('groups').innerHTML = html;
+  $('estimate').innerHTML = `Overall estimate, for reference: <b>${pct(res.probability)}</b> chance of being in the top 20% for accounts of
+    this size (typical: ${pct(res.base_rate)}). The estimate is rough; the checklist above is the main output.`;
+  $('raw').textContent = res.model_text;
+  $('result').classList.remove('hidden');
+  $('result').scrollIntoView({behavior: 'smooth'});
+}
+
+$('form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const file = $('video').files[0];
+  if (!file) return;
+  $('err').classList.add('hidden');
+  $('go').disabled = true;
+  $('progress').classList.remove('hidden');
+  $('step').textContent = 'Uploading';
+  const q = new URLSearchParams({caption: $('caption').value, music: $('music').value,
+    followers: $('followers').value, following: $('following').value, videos: $('videos').value});
+  if ($('posted').value) q.set('posted_at', $('posted').value);
+  const t0 = Date.now();
+  try {
+    const r = await fetch('/api/analyze?' + q, {method: 'POST', headers: {'Content-Type': 'video/mp4'}, body: file});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.statusText);
+    for (;;) {
+      await new Promise(ok => setTimeout(ok, 2000));
+      const s = await (await fetch('/api/jobs/' + j.job, {cache: 'no-store'})).json();
+      $('step').textContent = `${s.step || s.status} · ${Math.round((Date.now() - t0) / 1000)} s`;
+      if (s.status === 'done') { render(s.result); break; }
+      if (s.status === 'error') throw new Error(s.error);
+    }
+  } catch (e) {
+    $('err').textContent = 'Analysis failed: ' + e.message;
+    $('err').classList.remove('hidden');
+  } finally {
+    $('progress').classList.add('hidden');
+    $('go').disabled = false;
+  }
+});
+
+loadModel().catch(() => { $('rules-intro').textContent = 'The checklist file (smp_checklist.json) is missing; run smp/checklist/build.py.'; });
+checkServer();
+</script>
+</body>
+</html>
