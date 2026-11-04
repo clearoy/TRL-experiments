@@ -85,7 +85,7 @@ details.raw pre{white-space:pre-wrap;max-height:420px;overflow:auto}
       <textarea id="caption" placeholder="The post's caption, with hashtags"></textarea>
     </div>
     <div class="field">
-      <label for="music">Music or sound</label>
+      <label for="music">Music or sound (optional)</label>
       <input type="text" id="music" placeholder="original sound">
     </div>
     <div class="field">
@@ -144,7 +144,6 @@ function ruleLine(r) {
   const parts = [];
   if (r.hit_rate_yes != null && r.hit_rate_no != null)
     parts.push(`top 20% for their account size: ${pct(r.hit_rate_yes)} of posts with this, ${pct(r.hit_rate_no)} without`);
-  parts.push(`chosen in ${r.fold_support} of ${NFOLDS} folds`);
   return parts.join(' · ');
 }
 
@@ -155,12 +154,11 @@ async function loadModel() {
   $('subtitle').textContent = `Checks a video against ${n} content rules learned from ${MODEL.n_posts.toLocaleString()} US English short videos · internal tool`;
   $('rules-intro').innerHTML = `The ${n} questions the analyzer asks, chosen from ${MODEL.n_candidates} candidates written by
     <code>${esc(MODEL.created_with.generator)}</code> and answered by Jev. &ldquo;Helps&rdquo; means posts with it were more often in
-    the top 20% of their account-size group (base rate ${pct(MODEL.base_rate)}). Rates are from all posts; fold support counts how many of
-    the ${NFOLDS} cross-validation folds picked a similar rule with the same direction.`;
-  let t = '<thead><tr><th scope="col">#</th><th scope="col">Question</th><th scope="col">Direction</th><th scope="col">Top-20% rate with</th><th scope="col">without</th><th scope="col">Share of posts</th><th scope="col">Folds</th></tr></thead><tbody>';
+    the top 20% of their account-size group (base rate ${pct(MODEL.base_rate)}). Rates are from all posts.`;
+  let t = '<thead><tr><th scope="col">#</th><th scope="col">Question</th><th scope="col">Direction</th><th scope="col">Top-20% rate with</th><th scope="col">without</th><th scope="col">Share of posts</th></tr></thead><tbody>';
   MODEL.rules.forEach((r, i) => {
     t += `<tr><td class="n">${i + 1}</td><td class="wrap-cell">${esc(r.question)}</td><td>${r.direction}</td>
-      <td class="n">${pct(r.hit_rate_yes)}</td><td class="n">${pct(r.hit_rate_no)}</td><td class="n">${pct(r.share_yes)}</td><td class="n">${r.fold_support}/${NFOLDS}</td></tr>`;
+      <td class="n">${pct(r.hit_rate_yes)}</td><td class="n">${pct(r.hit_rate_no)}</td><td class="n">${pct(r.share_yes)}</td></tr>`;
   });
   $('rules').innerHTML = t + '</tbody>';
 
